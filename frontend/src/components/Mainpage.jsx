@@ -873,6 +873,7 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
   });
   const [submitting, setSubmitting] = useState(false);
   const [companies, setCompanies]   = useState([]);
+  const branchOptions = ['CSE', 'ECE', 'EEE', 'AIML', 'DS', 'CS', 'ALL'];
 
   // Only fetch company list for non-HR users (HR company is auto-assigned)
   useEffect(() => {
@@ -942,7 +943,7 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-[#111111] border border-[#222222] rounded-3xl w-full max-w-md p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#111111] border border-[#222222] rounded-3xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">Add New Drive</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl font-bold transition">&times;</button>
@@ -968,56 +969,62 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
               <span className="text-white font-semibold">{hrCompanyName}</span>
             </div>
           )}
-          <div>
-            <input type="text" placeholder="Drive Title"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
-              {...register('Title', { required: 'Title is required' })} />
-            {errors.Title && <p className="text-red-400 text-xs mt-1">{errors.Title.message}</p>}
-          </div>
-          <div>
-            <input type="text" placeholder="Job Role"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
-              {...register('JobRole', { required: 'Job Role is required' })} />
-            {errors.JobRole && <p className="text-red-400 text-xs mt-1">{errors.JobRole.message}</p>}
-          </div>
-          <div>
-            <input type="text" placeholder="Package (e.g., 10 LPA)"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
-              {...register('Package', { required: 'Package is required' })} />
-            {errors.Package && <p className="text-red-400 text-xs mt-1">{errors.Package.message}</p>}
-          </div>
-          <div>
-            <input type="date"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
-              {...register('LastDate', { required: 'Last Date is required' })} />
-            {errors.LastDate && <p className="text-red-400 text-xs mt-1">{errors.LastDate.message}</p>}
-          </div>
-          <div>
-            <input type="number" step="0.1" placeholder="Min CGPA"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
-              {...register('MinCGPA', { required: 'Min CGPA is required', min: 0, max: 10 })} />
-            {errors.MinCGPA && <p className="text-red-400 text-xs mt-1">{errors.MinCGPA.message}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <input type="text" placeholder="Drive Title"
+                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                {...register('Title', { required: 'Title is required' })} />
+              {errors.Title && <p className="text-red-400 text-xs mt-1">{errors.Title.message}</p>}
+            </div>
+            <div>
+              <input type="text" placeholder="Job Role"
+                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                {...register('JobRole', { required: 'Job Role is required' })} />
+              {errors.JobRole && <p className="text-red-400 text-xs mt-1">{errors.JobRole.message}</p>}
+            </div>
+            <div>
+              <input type="text" placeholder="Package (e.g., 10 LPA)"
+                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                {...register('Package', { required: 'Package is required' })} />
+              {errors.Package && <p className="text-red-400 text-xs mt-1">{errors.Package.message}</p>}
+            </div>
+            <div>
+              <input type="date"
+                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                {...register('LastDate', { required: 'Last Date is required' })} />
+              {errors.LastDate && <p className="text-red-400 text-xs mt-1">{errors.LastDate.message}</p>}
+            </div>
+            <div>
+              <input type="number" step="0.1" placeholder="Min CGPA"
+                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                {...register('MinCGPA', { required: 'Min CGPA is required', min: 0, max: 10 })} />
+              {errors.MinCGPA && <p className="text-red-400 text-xs mt-1">{errors.MinCGPA.message}</p>}
+            </div>
           </div>
           {/* Multi-select branches */}
           <div>
-            <select multiple
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition h-36"
-              {...register('AllowedBranch', { required: 'Select at least one branch' })}>
-              <optgroup label="Core Branches">
-                {['CSE', 'ECE', 'EEE', 'CS'].map(b => (
-                  <option key={b} value={b}>{b}</option>
+            <div className="rounded-2xl border border-[#333333] bg-[#0f0f0f] p-4">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <p className="text-sm font-semibold text-white">Eligible Branches</p>
+                <span className="text-xs text-gray-400">Select any number of branches</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {branchOptions.map((branch) => (
+                  <label
+                    key={branch}
+                    className="flex items-center gap-2 rounded-xl border border-[#333333] bg-[#151515] px-3 py-2 text-sm text-gray-200 transition hover:border-blue-700/40 hover:bg-blue-900/10"
+                  >
+                    <input
+                      type="checkbox"
+                      value={branch}
+                      className="accent-blue-600 h-4 w-4"
+                      {...register('AllowedBranch', { required: 'Select at least one branch' })}
+                    />
+                    <span>{branch === 'ALL' ? 'ALL - All branches eligible' : branch}</span>
+                  </label>
                 ))}
-              </optgroup>
-              <optgroup label="Specialized Branches">
-                {['AIML', 'DS'].map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </optgroup>
-              <optgroup label="All Branches">
-                <option value="ALL">ALL - All branches eligible</option>
-              </optgroup>
-            </select>
-            <p className="text-xs text-gray-500 mt-1">Hold Ctrl / Cmd to select multiple</p>
+              </div>
+            </div>
             {errors.AllowedBranch && <p className="text-red-400 text-xs mt-1">{errors.AllowedBranch.message}</p>}
           </div>
           <div>
@@ -1767,7 +1774,7 @@ function Mainpage() {
       {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
       {/* ── Profile Card ── */}
-      <div className="w-full bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col md:flex-row md:items-center gap-5 md:gap-8 justify-between relative shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_0_34px_rgba(239,68,68,0.16)] hover:border-red-500/25">
+      <div className="w-full bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col md:flex-row md:items-center gap-5 md:gap-8 justify-between relative shadow-lg transition-all duration-300">
         <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-5 min-w-0">
           <div className="relative shrink-0">
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-[#333333] shadow-lg bg-[#1a1a1a]">
@@ -1831,7 +1838,7 @@ function Mainpage() {
           </div>
         </div>
         <button onClick={() => { logout(); navigate('/login', { replace: true }); }}
-          className="bg-red-500/10 text-red-500 border border-red-500/20 px-8 py-3 rounded-xl hover:bg-red-500 hover:text-white hover:shadow-[0_0_24px_rgba(239,68,68,0.35)] transition-all duration-200 font-semibold w-full md:w-auto">
+          className="bg-red-500/10 text-red-500 border border-red-500/20 px-8 py-3 rounded-xl hover:bg-red-500 hover:text-white transition-all duration-200 font-semibold w-full md:w-auto">
           Logout
         </button>
       </div>
@@ -1846,8 +1853,8 @@ function Mainpage() {
           <button onClick={() => setActiveView('drives')}
             className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
               activeView === 'drives'
-                ? 'bg-white text-black border-white shadow-[0_0_24px_rgba(239,68,68,0.18)]'
-                : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
+                ? 'bg-white text-black border-white'
+                : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
             }`}>
             {isHR ? 'Manage Drives' : 'Available Drives'}
           </button>
@@ -1856,8 +1863,8 @@ function Mainpage() {
             <button onClick={() => setActiveView('applied')}
               className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                 activeView === 'applied'
-                  ? 'bg-white text-black border-white shadow-[0_0_24px_rgba(239,68,68,0.18)]'
-                  : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
+                  ? 'bg-white text-black border-white'
+                  : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
               }`}>
               Applied Roles
             </button>
@@ -1869,8 +1876,8 @@ function Mainpage() {
                     <button onClick={() => setActiveView('analytics')}
                       className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                         activeView === 'analytics'
-                          ? 'bg-white text-black border-white shadow-[0_0_24px_rgba(239,68,68,0.18)]'
-                          : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
+                          ? 'bg-white text-black border-white'
+                          : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
                       }`}>
                       Analytics
                     </button>
@@ -1880,8 +1887,8 @@ function Mainpage() {
                     <button onClick={() => setActiveView('analytics')}
                       className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                         activeView === 'analytics'
-                          ? 'bg-white text-black border-white shadow-[0_0_24px_rgba(239,68,68,0.18)]'
-                          : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
+                          ? 'bg-white text-black border-white'
+                          : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
                       }`}>
                       {isTeacher ? 'Generate Reports' : 'My Analytics'}
                     </button>
@@ -1890,8 +1897,8 @@ function Mainpage() {
                   <button onClick={() => setActiveView('settings')}
                     className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                       activeView === 'settings'
-                        ? 'bg-white text-black border-white shadow-[0_0_24px_rgba(239,68,68,0.18)]'
-                        : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25 hover:shadow-[0_0_20px_rgba(239,68,68,0.16)]'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
                     }`}>
                     Settings
                   </button>
@@ -1917,7 +1924,7 @@ function Mainpage() {
                       {!isTeacher && (
                         <input type="number" step="0.1" placeholder="Max CGPA" value={cgpaFilter}
                           onChange={e => setCgpaFilter(e.target.value)}
-                          className="bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm w-full sm:w-32 transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]" />
+                          className="bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm w-full sm:w-32 transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                       )}
                     </>
                   )}
@@ -1977,7 +1984,7 @@ function Mainpage() {
                     <div key={drive._id} onClick={() => {
                         if (!isHR) setSelectedDriveToView({ ...drive, id: drive._id, company: companyName, role: drive.JobRole, salary: drive.Package });
                       }}
-                      className={`cursor-pointer bg-[#111111] border rounded-2xl p-5 sm:p-6 hover:border-red-500/25 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01] flex flex-col justify-between min-w-0 shadow-lg group hover:shadow-[0_0_26px_rgba(239,68,68,0.16)] ${isInactive ? 'border-gray-700 opacity-70' : isExpired ? 'border-red-900/40 opacity-70' : isClosingSoon ? 'border-orange-500/30' : 'border-[#222222]'}`}>
+                      className={`cursor-pointer bg-[#111111] border rounded-2xl p-5 sm:p-6 hover:border-red-500/25 flex flex-col justify-between min-w-0 shadow-lg group ${isInactive ? 'border-gray-700 opacity-70' : isExpired ? 'border-red-900/40 opacity-70' : isClosingSoon ? 'border-orange-500/30' : 'border-[#222222]'}`}>
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md group-hover:scale-105 transition-transform">
@@ -2015,16 +2022,16 @@ function Mainpage() {
                         {isHR ? (
                           <div className="grid gap-3">
                             <button onClick={() => setSelectedDriveToView({ ...drive, id: drive._id, company: companyName, role: drive.JobRole })}
-                              className="w-full bg-[#1a1a1a] border border-[#333333] text-white font-semibold py-3 rounded-xl hover:bg-white hover:text-black transition shadow-sm hover:shadow-[0_0_22px_rgba(239,68,68,0.22)]">
+                              className="w-full bg-[#1a1a1a] border border-[#333333] text-white font-semibold py-3 rounded-xl hover:bg-white hover:text-black transition shadow-sm">
                               View Candidates
                             </button>
                             <div className="flex gap-3">
                               <button onClick={() => setSelectedDriveToEdit(drive)}
-                                className="flex-1 bg-blue-500/10 text-blue-300 border border-blue-500/20 font-semibold py-3 rounded-xl hover:bg-blue-500/20 transition hover:shadow-[0_0_18px_rgba(239,68,68,0.15)]">
+                                className="flex-1 bg-blue-500/10 text-blue-300 border border-blue-500/20 font-semibold py-3 rounded-xl hover:bg-blue-500/20 transition">
                                 Edit Drive
                               </button>
                               <button onClick={() => toggleDriveActive(drive)}
-                                className={`flex-1 font-semibold py-3 rounded-xl transition ${drive.isActive ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:shadow-[0_0_18px_rgba(239,68,68,0.18)]' : 'bg-green-500/10 text-green-300 border border-green-500/20 hover:bg-green-500/20 hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]'}`}>
+                                className={`flex-1 font-semibold py-3 rounded-xl transition ${drive.isActive ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20' : 'bg-green-500/10 text-green-300 border border-green-500/20 hover:bg-green-500/20'}`}>
                                 {drive.isActive ? 'Stop Drive' : 'Resume Drive'}
                               </button>
                             </div>
@@ -2045,7 +2052,7 @@ function Mainpage() {
 
                               return (
                                 <button onClick={() => setSelectedDriveToApply({ ...drive, id: drive._id, company: companyName, role: drive.JobRole, salary: drive.Package })}
-                                  className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-gray-200 transition shadow-md hover:shadow-[0_0_22px_rgba(239,68,68,0.24)]">
+                                  className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-gray-200 transition shadow-md">
                                   Apply Now
                                 </button>
                               );
