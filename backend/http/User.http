@@ -1,0 +1,22 @@
+###create the user
+POST http://localhost:5000/user-api/user
+Content-Type: application/json
+
+{
+  "name":"adithya",
+  "email":"adithya@gmail.com",
+  "password":"123456",
+  "role":"HR"
+}
+
+###login
+POST http://localhost:5000/user-api/login
+Content-Type: application/json
+
+{
+  "email":"adithya@gmail.com",
+  "password":"123456"
+}
+
+###logout
+POST http://localhost:5000/user-api/logout

@@ -1,0 +1,19 @@
+###get all the students
+GET http://localhost:5000/admin-api/admin/student
+
+###get the student by rollno
+GET http://localhost:5000/admin-api/admin/student/11
+
+###get all the students
+GET http://localhost:5000/admin-api/admin/teacher/123
+
+###get all the company
+GET http://localhost:5000/admin-api/admin/company
+
+###get all the students
+GET http://localhost:5000/admin-api/admin/company/123456
+
+
+###get all the drives
+###get all the students
+GET http://localhost:5000/admin-api/admin/drive
