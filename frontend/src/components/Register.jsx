@@ -113,35 +113,41 @@ function Register() {
           {/* Role Selection */}
           <div className="mt-2 bg-[#1a1a1a]/50 p-4 rounded-2xl border border-white/5">
             <p className="text-white/80 font-medium mb-3 text-sm">Select Your Role</p>
-            <div className="flex gap-4 sm:gap-6 text-white text-sm">
-              <label className="flex items-center gap-2 cursor-pointer group">
+            <div className="flex flex-wrap gap-2 text-white text-sm">
+              <label className="cursor-pointer group">
                 <input
                   type="radio"
                   value="Student"
-                  className="accent-white cursor-pointer w-4 h-4"
+                  className="peer sr-only"
                   {...register('role', { required: 'Please select a role' })}
                 />
-                <span className="group-hover:text-gray-300 transition">Student</span>
+                <span className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-[#111111] px-3 py-2 transition hover:border-blue-700/30 hover:bg-blue-900/20 peer-checked:border-blue-800/50 peer-checked:bg-blue-900/60 peer-checked:text-blue-200 peer-checked:shadow-[0_0_14px_rgba(29,78,216,0.28)]">
+                  Student
+                </span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer group">
+              <label className="cursor-pointer group">
                 <input
                   type="radio"
                   value="Teacher"
-                  className="accent-white cursor-pointer w-4 h-4"
+                  className="peer sr-only"
                   {...register('role')}
                 />
-                <span className="group-hover:text-gray-300 transition">Teacher</span>
+                <span className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-[#111111] px-3 py-2 transition hover:border-blue-700/30 hover:bg-blue-900/20 peer-checked:border-blue-800/50 peer-checked:bg-blue-900/60 peer-checked:text-blue-200 peer-checked:shadow-[0_0_14px_rgba(29,78,216,0.28)]">
+                  Teacher
+                </span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer group">
+              <label className="cursor-pointer group">
                 <input
                   type="radio"
                   value="HR"
-                  className="accent-white cursor-pointer w-4 h-4"
+                  className="peer sr-only"
                   {...register('role')}
                 />
-                <span className="group-hover:text-gray-300 transition">HR</span>
+                <span className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-[#111111] px-3 py-2 transition hover:border-blue-700/30 hover:bg-blue-900/20 peer-checked:border-blue-800/50 peer-checked:bg-blue-900/60 peer-checked:text-blue-200 peer-checked:shadow-[0_0_14px_rgba(29,78,216,0.28)]">
+                  HR
+                </span>
               </label>
             </div>
             {errors.role && <p className="text-red-400 text-xs mt-2">{errors.role.message}</p>}

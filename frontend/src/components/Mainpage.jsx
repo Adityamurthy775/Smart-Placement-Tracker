@@ -44,7 +44,7 @@ const STATUS_EMAIL_COPY = {
 const STATUS_COLORS = {
   APPLIED:     { bg: '#378ADD', badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   SHORTLISTED: { bg: '#EF9F27', badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  SELECTED:    { bg: '#639922', badge: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  SELECTED:    { bg: '#1e40af', badge: 'bg-blue-900/20 text-blue-300 border-blue-800/30' },
   REJECTED:    { bg: '#E24B4A', badge: 'bg-red-500/10 text-red-400 border-red-500/20' },
 };
 
@@ -454,7 +454,7 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
     const map = {
       APPLIED:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
       SHORTLISTED: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-      SELECTED:    'bg-green-500/10 text-green-400 border-green-500/20',
+      SELECTED:    'bg-blue-900/20 text-blue-300 border-blue-800/30',
       REJECTED:    'bg-red-500/10 text-red-400 border-red-500/20',
     };
     return map[s] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
@@ -653,7 +653,7 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
     const map = {
       APPLIED:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
       SHORTLISTED: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-      SELECTED:    'bg-green-500/10 text-green-400 border-green-500/20',
+      SELECTED:    'bg-blue-900/20 text-blue-300 border-blue-800/30',
       REJECTED:    'bg-red-500/10 text-red-400 border-red-500/20',
     };
     return map[s] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
