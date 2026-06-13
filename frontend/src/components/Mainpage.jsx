@@ -393,38 +393,25 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
       const name      = candidate.studentName || 'Student';
       const emailCopy = STATUS_EMAIL_COPY[status] || STATUS_EMAIL_COPY.SHORTLISTED;
 
-const params = {
-  to_email: candidate.studentEmail,
-  to_name: name,
-  company,
-  role,
-  status,
-  status_label: emailCopy.label,
-  subject: emailCopy.subject(company, role),
-  message: emailCopy.message(name, company, role),
-};
-
-
-const result = await emailjs.send(
-  serviceId,
-  templateId,
-  params,
-  publicKey
-);
-
-console.log("Email sent successfully:", result);
+      const params = {
+        to_email: candidate.studentEmail,
+        to_name: name,
+        company,
+        role,
+        status,
+        status_label: emailCopy.label,
+        subject: emailCopy.subject(company, role),
+        message: emailCopy.message(name, company, role),
+      };
 
       if (serviceId && templateId && publicKey) {
-        await emailjs.send(serviceId, templateId, {
-          to_email: candidate.studentEmail,
-          to_name: name,
-          company,
-          role,
-          status,
-          status_label: emailCopy.label,
-          subject: emailCopy.subject(company, role),
-          message: emailCopy.message(name, company, role),
-        }, publicKey);
+        const result = await emailjs.send(
+          serviceId,
+          templateId,
+          params,
+          publicKey
+        );
+        console.log("Email sent successfully via EmailJS:", result);
       } else {
         await axios.post(`${API_BASE}/notify-api/status-update`, {
           studentEmail: candidate.studentEmail,
@@ -433,6 +420,7 @@ console.log("Email sent successfully:", result);
           role,
           status,
         });
+        console.log("Notification status update sent via API fallback");
       }
 
       showToast(
@@ -440,17 +428,19 @@ console.log("Email sent successfully:", result);
         status === 'REJECTED' ? 'error' : 'success'
       );
     } catch (err) {
-  console.error("EmailJS Error:", {
-    status: err.status,
-    text: err.text,
-    error: err
-  });
+      console.error("EmailJS Error:", {
+        status: err?.status,
+        text: err?.text,
+        error: err
+      });
 
-  showToast(
-    `Email failed: ${err.text || "Unknown error"}`,
-    "error"
-  );
-}
+      showToast(
+        `Email failed: ${err?.text || "Unknown error"}`,
+        "error"
+      );
+    } finally {
+      setSending(false);
+    }
   }
 
   const openResume = () => {
@@ -566,14 +556,10 @@ console.log("Email sent successfully:", result);
           </div>
 
           {/* Action buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-2">
             <button disabled={sending} onClick={() => handleAction('SHORTLISTED')}
               className="flex-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-semibold py-3 rounded-xl hover:bg-yellow-500 hover:text-black transition disabled:opacity-50">
               {sending ? '...' : 'Shortlist'}
-            </button>
-            <button disabled={sending} onClick={() => handleAction('SELECTED')}
-              className="flex-1 bg-green-500/10 text-green-500 border border-green-500/20 font-semibold py-3 rounded-xl hover:bg-green-500 hover:text-black transition disabled:opacity-50">
-              {sending ? '...' : 'Selected'}
             </button>
             <button disabled={sending} onClick={() => handleAction('REJECTED')}
               className="flex-1 bg-red-500/10 text-red-500 border border-red-500/20 font-semibold py-3 rounded-xl hover:bg-red-500 hover:text-white transition disabled:opacity-50">
