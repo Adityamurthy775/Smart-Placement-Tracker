@@ -381,13 +381,6 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
     setSending(true);
     onUpdateStatus(candidate, status);
 
-    if (status === 'SHORTLISTED') {
-      showToast(`${candidate.studentName || 'Student'} shortlisted.`, 'warning');
-      setSending(false);
-      onClose();
-      return;
-    }
-
     try {
       if (!candidate.studentEmail) throw new Error('Candidate email is missing.');
 
@@ -399,6 +392,27 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
       const role      = drive?.role    || candidate.role    || 'the position';
       const name      = candidate.studentName || 'Student';
       const emailCopy = STATUS_EMAIL_COPY[status] || STATUS_EMAIL_COPY.SHORTLISTED;
+
+const params = {
+  to_email: candidate.studentEmail,
+  to_name: name,
+  company,
+  role,
+  status,
+  status_label: emailCopy.label,
+  subject: emailCopy.subject(company, role),
+  message: emailCopy.message(name, company, role),
+};
+
+
+const result = await emailjs.send(
+  serviceId,
+  templateId,
+  params,
+  publicKey
+);
+
+console.log("Email sent successfully:", result);
 
       if (serviceId && templateId && publicKey) {
         await emailjs.send(serviceId, templateId, {
@@ -422,16 +436,22 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
       }
 
       showToast(
-        `Email sent to ${candidate.studentName || name} — ${status === 'SELECTED' ? 'Selected' : 'Rejected'}`,
+        `Email sent to ${candidate.studentName || name} — ${emailCopy.label}`,
         status === 'REJECTED' ? 'error' : 'success'
       );
     } catch (err) {
-      console.error('Email sending error:', err);
-      showToast('Status updated but email failed to send.', 'warning');
-    }
-    setSending(false);
-    onClose();
-  };
+  console.error("EmailJS Error:", {
+    status: err.status,
+    text: err.text,
+    error: err
+  });
+
+  showToast(
+    `Email failed: ${err.text || "Unknown error"}`,
+    "error"
+  );
+}
+  }
 
   const openResume = () => {
     if (!canViewResume) return;
@@ -576,6 +596,7 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
   const [filterCgpa, setFilterCgpa]           = useState('');
   const [sortBy, setSortBy]                   = useState('');
   const [selectedAppIds, setSelectedAppIds]   = useState(new Set());
+  const [loadingApplicants, setLoadingApplicants] = useState(true);
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -588,6 +609,8 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
       } catch (err) {
         console.error('Failed to fetch drive applicants', err);
         setApplicants([]);
+      } finally {
+        setLoadingApplicants(false);
       }
     };
     fetchApplicants();
@@ -709,7 +732,11 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2">
-          {filteredApplicants.length > 0 ? (
+          {loadingApplicants ? (
+            <div className="flex flex-col gap-3">
+              {Array.from({ length: 4 }).map((_, idx) => <SkeletonRow key={idx} />)}
+            </div>
+          ) : filteredApplicants.length > 0 ? (
             <div className="flex flex-col gap-3">
               {filteredApplicants.map((app, idx) => (
                 <div key={idx} className="bg-[#1a1a1a] border border-[#333333] p-4 rounded-xl flex items-center gap-4 hover:border-[#444444] transition">
@@ -735,7 +762,11 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-center py-10">No applicants match criteria.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333333] flex items-center justify-center mb-4 text-2xl">◎</div>
+              <h4 className="text-white font-semibold mb-2">No applicants match criteria.</h4>
+              <p className="text-gray-400 text-sm max-w-sm">Try clearing the filters or wait for students to apply to this drive.</p>
+            </div>
           )}
         </div>
       </div>
@@ -1413,6 +1444,37 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse rounded-2xl border border-[#222222] bg-[#111111] p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="h-12 w-12 rounded-xl bg-[#1a1a1a]" />
+        <div className="flex flex-col items-end gap-2">
+          <div className="h-5 w-24 rounded-full bg-[#1a1a1a]" />
+          <div className="h-4 w-16 rounded-full bg-[#1a1a1a]" />
+        </div>
+      </div>
+      <div className="h-5 w-3/4 rounded bg-[#1a1a1a] mb-3" />
+      <div className="h-4 w-1/2 rounded bg-[#1a1a1a] mb-6" />
+      <div className="h-10 w-full rounded-xl bg-[#1a1a1a]" />
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="animate-pulse flex items-center gap-4 rounded-xl border border-[#333333] bg-[#1a1a1a] p-4">
+      <div className="h-5 w-5 rounded bg-[#222222]" />
+      <div className="h-10 w-10 rounded-full bg-[#222222]" />
+      <div className="flex-1 min-w-0">
+        <div className="h-4 w-1/3 rounded bg-[#222222] mb-2" />
+        <div className="h-3 w-1/2 rounded bg-[#222222]" />
+      </div>
+      <div className="h-7 w-24 rounded-full bg-[#222222]" />
+    </div>
+  );
+}
+
 /* ─────────────── HR Dashboard ─────────────── */
 // HR view for managing companies, drives, and hiring activity
 function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
@@ -1585,9 +1647,12 @@ function Mainpage() {
   const [showAddDriveModal, setShowAddDriveModal]   = useState(false);
   const [searchQuery, setSearchQuery]               = useState('');
   const [cgpaFilter, setCgpaFilter]                 = useState('');
+  const [driveSortOrder, setDriveSortOrder]         = useState('newest');
   const [drives, setDrives]                         = useState([]);
   const [companies, setCompanies]                   = useState([]);
   const [toast, setToast]                           = useState(null);
+  const [drivesLoading, setDrivesLoading]           = useState(true);
+  const [applicationsLoading, setApplicationsLoading] = useState(true);
 
   const isHR = user?.role === 'hr' || user?.role === 'HR';
   const isTeacher = user?.role === 'Teacher';
@@ -1599,7 +1664,10 @@ function Mainpage() {
 
   const fetchDrives = async () => {
     try {
-      if (!user) return;
+      if (!user) {
+        setDrivesLoading(false);
+        return;
+      }
       // HR users only fetch drives they created, keyed by user id
       if (isHR && user?.id) {
         const res = await axios.get(`${API_BASE}/drive-api/drive/hr/${user.id}`, { withCredentials: true });
@@ -1610,6 +1678,9 @@ function Mainpage() {
       setDrives(res.data.payload || []);
     } catch (err) {
       console.error('Failed to fetch drives', err);
+      setDrives([]);
+    } finally {
+      setDrivesLoading(false);
     }
   };
 
@@ -1635,6 +1706,7 @@ function Mainpage() {
     if (!user?.email) {
       setUserApplications([]);
       setAppliedDriveIds([]);
+      setApplicationsLoading(false);
       return;
     }
 
@@ -1651,6 +1723,8 @@ function Mainpage() {
       console.error('Failed to fetch user applications', err);
       setUserApplications([]);
       setAppliedDriveIds([]);
+    } finally {
+      setApplicationsLoading(false);
     }
   }, [user?.email]);
 
@@ -1715,6 +1789,10 @@ function Mainpage() {
     const matchName   = companyName.toLowerCase().includes(searchValue) || d.Title?.toLowerCase().includes(searchValue) || d.JobRole?.toLowerCase().includes(searchValue);
     const matchCgpa   = cgpaFilter ? parseFloat(d.MinCGPA) <= parseFloat(cgpaFilter) : true;
     return matchName && matchCgpa;
+  }).sort((a, b) => {
+    const aTime = a?.createdAt ? new Date(a.createdAt).getTime() : (a?._id ? parseInt(String(a._id).slice(0, 8), 16) * 1000 : 0);
+    const bTime = b?.createdAt ? new Date(b.createdAt).getTime() : (b?._id ? parseInt(String(b._id).slice(0, 8), 16) * 1000 : 0);
+    return driveSortOrder === 'oldest' ? aTime - bTime : bTime - aTime;
   });
 
   const handleApplied = () => {
@@ -1810,7 +1888,7 @@ function Mainpage() {
                 <span className="bg-blue-500/10 text-blue-300 px-4 py-1.5 rounded-full border border-blue-500/20 text-sm font-medium">
                   🏢 {profileDetails.companyName}
                 </span>
-                
+
               )}
             </div>
 
@@ -1928,6 +2006,14 @@ function Mainpage() {
                       )}
                     </>
                   )}
+                  <select
+                    value={driveSortOrder}
+                    onChange={e => setDriveSortOrder(e.target.value)}
+                    className="bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]"
+                  >
+                    <option value="newest">New to old</option>
+                    <option value="oldest">Old to new</option>
+                  </select>
                   {isHR && (
                     <button onClick={() => setShowAddDriveModal(true)}
                       className="bg-white text-black font-semibold px-5 py-2 rounded-xl hover:bg-gray-200 transition text-sm shadow-md hover:shadow-[0_0_22px_rgba(239,68,68,0.24)]">
@@ -1956,11 +2042,13 @@ function Mainpage() {
 
               {/* Drive cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                {filteredDrives.length === 0 ? (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+                {drivesLoading ? (
+                  Array.from({ length: 6 }).map((_, idx) => <SkeletonCard key={idx} />)
+                ) : filteredDrives.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-center rounded-3xl border border-dashed border-[#2b2b2b] bg-[#0f0f0f]">
                     <div className="w-20 h-20 bg-[#1a1a1a] border border-[#222222] rounded-full flex items-center justify-center mb-4 text-4xl">🔍</div>
                     <h4 className="text-white font-bold text-lg mb-2">No drives found</h4>
-                    <p className="text-gray-500 text-sm">Try adjusting your search or filter criteria</p>
+                    <p className="text-gray-500 text-sm max-w-sm">Try adjusting your search or filter criteria, or wait for new drives to be posted.</p>
                   </div>
                 ) : filteredDrives.map(drive => {
                   const companyName    = drive.companyId?.CompanyName || 'Unknown';
@@ -2076,9 +2164,15 @@ function Mainpage() {
                   Applied Roles
                   <span className="bg-white text-black text-xs px-3 py-1 rounded-full font-bold">{roles.length}</span>
                 </h3>
-                {roles.length === 0 ? (
-                  <div className="bg-[#111111] border border-[#222222] rounded-2xl p-8 sm:p-10 text-center text-gray-400">
-                    You haven't applied to any roles yet!
+                {applicationsLoading ? (
+                  <div className="flex flex-col gap-3">
+                    {Array.from({ length: 4 }).map((_, idx) => <SkeletonRow key={idx} />)}
+                  </div>
+                ) : roles.length === 0 ? (
+                  <div className="bg-[#111111] border border-dashed border-[#222222] rounded-2xl p-8 sm:p-10 text-center text-gray-400">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1a1a1a] border border-[#333333] flex items-center justify-center text-2xl">◎</div>
+                    <p className="text-white font-semibold mb-2">No applications yet</p>
+                    <p className="text-gray-400 text-sm">Browse the drives tab and apply to roles that match your profile.</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
