@@ -4,6 +4,7 @@ import { StudentModel } from '../modules/StudentModel.js';
 import { model } from 'mongoose';
 import { Schema } from 'mongoose';
 import { ApplicationModel } from '../modules/ApplicationModel.js';
+import { InterviewSlotModel } from '../modules/InterviewSlotModel.js';
 
 Studentapp.post('/apply', async(req, res) => {
     try {
@@ -25,7 +26,7 @@ Studentapp.get('/applications', async(req, res) => {
         if (studentid) query.studentid = studentid;
         if (status) query.status = status;
         if (driveid) query.driveid = driveid;
-        const result = await ApplicationModel.find(query);
+        const result = await ApplicationModel.find(query).populate('interviewSlotId');
         res.status(200).json({message: "Applications fetched", payload: result});
     } catch(err) {
         res.status(500).json({message: err.message});
@@ -42,12 +43,28 @@ Studentapp.patch('/applications/:id', async(req, res) => {
         Object.assign(application, updates);
         if (updates.status) {
           const now = new Date();
-          if (updates.status === 'SHORTLISTED') application.shortlistedAt = now;
+          if (updates.status === 'SHORTLISTED') {
+            application.shortlistedAt = now;
+            // Find an available slot for this drive
+            const availableSlot = await InterviewSlotModel.findOne({
+              driveId: application.driveid || application.driveId,
+              status: 'AVAILABLE'
+            });
+            if (availableSlot) {
+              availableSlot.status = 'BOOKED';
+              availableSlot.bookedBy = application.studentid;
+              await availableSlot.save();
+              application.interviewSlotId = availableSlot._id;
+            }
+          }
           if (updates.status === 'INTERVIEW') application.interviewedAt = now;
           if (updates.status === 'SELECTED') application.selectedAt = now;
           if (updates.status === 'REJECTED') application.rejectedAt = now;
         }
-        const saved = await application.save();
+        let saved = await application.save();
+        if (saved.interviewSlotId) {
+          saved = await saved.populate('interviewSlotId');
+        }
         res.status(200).json({message: 'Application updated', payload: saved});
     } catch(err) {
         res.status(500).json({message: err.message});

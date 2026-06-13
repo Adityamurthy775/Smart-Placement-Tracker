@@ -276,7 +276,10 @@ function ProfileFormModal({ onClose }) {
             </>
           )}
           <button type="submit" disabled={uploading}
-            className="mt-4 bg-white text-black font-semibold py-3 rounded-full hover:bg-gray-200 transition disabled:opacity-50">
+            className="mt-4 bg-white text-black font-semibold py-3 rounded-full hover:bg-gray-200 transition disabled:opacity-50 flex items-center justify-center gap-2">
+            {uploading && (
+              <span className="inline-block w-4 h-4 border-2 border-t-transparent border-black rounded-full animate-spin" />
+            )}
             {uploading ? 'Saving...' : 'Save Details'}
           </button>
         </form>
@@ -360,7 +363,10 @@ function ApplyJobModal({ drive, onClose, onApplied }) {
               Cancel
             </button>
             <button type="submit" disabled={applying}
-              className="flex-1 bg-white text-black font-semibold py-3 rounded-full hover:bg-gray-200 transition disabled:opacity-50">
+              className="flex-1 bg-white text-black font-semibold py-3 rounded-full hover:bg-gray-200 transition disabled:opacity-50 flex items-center justify-center gap-2">
+              {applying && (
+                <span className="inline-block w-4 h-4 border-2 border-t-transparent border-black rounded-full animate-spin" />
+              )}
               {applying ? 'Submitting...' : 'Submit'}
             </button>
           </div>
@@ -379,29 +385,36 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
 
   const handleAction = async (status) => {
     setSending(true);
-    onUpdateStatus(candidate, status);
-
     try {
-      if (!candidate.studentEmail) throw new Error('Candidate email is missing.');
+      const updatedCandidate = await onUpdateStatus(candidate, status);
+      if (!updatedCandidate.studentEmail) throw new Error('Candidate email is missing.');
 
       const serviceId  = import.meta.env.VITE_EMAILJS_SERVICE_ID;
       const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
       const publicKey  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-      const company   = drive?.company || candidate.company || 'Our Company';
-      const role      = drive?.role    || candidate.role    || 'the position';
-      const name      = candidate.studentName || 'Student';
+      const company   = drive?.company || updatedCandidate.company || 'Our Company';
+      const role      = drive?.role    || updatedCandidate.role    || 'the position';
+      const name      = updatedCandidate.studentName || 'Student';
       const emailCopy = STATUS_EMAIL_COPY[status] || STATUS_EMAIL_COPY.SHORTLISTED;
 
+      let messageText = emailCopy.message(name, company, role);
+      if (status === 'SHORTLISTED' && updatedCandidate.interviewSlotId) {
+        const slot = updatedCandidate.interviewSlotId;
+        const start = new Date(slot.startTime).toLocaleString();
+        const end = new Date(slot.endTime).toLocaleString();
+        messageText += `\n\nWe have scheduled an interview slot for you:\nStart Time: ${start}\nEnd Time: ${end}\n\nPlease join on time.`;
+      }
+
       const params = {
-        to_email: candidate.studentEmail,
+        to_email: updatedCandidate.studentEmail,
         to_name: name,
         company,
         role,
         status,
         status_label: emailCopy.label,
         subject: emailCopy.subject(company, role),
-        message: emailCopy.message(name, company, role),
+        message: messageText,
       };
 
       if (serviceId && templateId && publicKey) {
@@ -414,17 +427,19 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
         console.log("Email sent successfully via EmailJS:", result);
       } else {
         await axios.post(`${API_BASE}/notify-api/status-update`, {
-          studentEmail: candidate.studentEmail,
+          studentEmail: updatedCandidate.studentEmail,
           studentName: name,
           company,
           role,
           status,
+          subject: params.subject,
+          message: messageText,
         });
         console.log("Notification status update sent via API fallback");
       }
 
       showToast(
-        `Email sent to ${candidate.studentName || name} — ${emailCopy.label}`,
+        `Email sent to ${updatedCandidate.studentName || name} — ${emailCopy.label}`,
         status === 'REJECTED' ? 'error' : 'success'
       );
     } catch (err) {
@@ -575,7 +590,7 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
 /* ─────────────── View Applicants Modal (HR) ─────────────── */
 /* ─────────────── View Applicants Modal ─────────────── */
 // HR view that lists all applicants for a drive and allows filtering / bulk actions
-function ViewApplicantsModal({ drive, onClose, showToast }) {
+function ViewApplicantsModal({ drive, onClose, showToast, onStatusUpdated }) {
   const [applicants, setApplicants]           = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [filterStatus, setFilterStatus]       = useState('');
@@ -607,10 +622,14 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
       const res = await axios.patch(`${API_BASE}/student-api/applications/${candidate._id}`, {
         status: newStatus,
       }, { withCredentials: true });
-      setApplicants(prev => prev.map(a => a._id === res.data.payload._id ? res.data.payload : a));
+      const updated = res.data.payload;
+      setApplicants(prev => prev.map(a => a._id === updated._id ? updated : a));
+      if (onStatusUpdated) onStatusUpdated();
+      return updated;
     } catch (err) {
       console.error('Failed to update status', err);
       showToast('Unable to update application status.', 'error');
+      throw err;
     }
   };
 
@@ -621,10 +640,67 @@ function ViewApplicantsModal({ drive, onClose, showToast }) {
         axios.patch(`${API_BASE}/student-api/applications/${id}`, { status: newStatus }, { withCredentials: true })
       );
       const results = await Promise.all(updatePromises);
-      const updatedIds = new Set(results.map(r => r.data.payload._id));
-      setApplicants(prev => prev.map(a => updatedIds.has(a._id) ? { ...a, status: newStatus } : a));
+      const updatedCandidates = results.map(r => r.data.payload);
+      const updatedIds = new Set(updatedCandidates.map(c => c._id));
+      
+      setApplicants(prev => prev.map(a => updatedIds.has(a._id) ? updatedCandidates.find(c => c._id === a._id) : a));
       setSelectedAppIds(new Set());
       showToast(`Bulk updated ${updatedIds.size} candidates to ${newStatus}`);
+      
+      if (onStatusUpdated) onStatusUpdated();
+
+      // Parallel bulk email notifications
+      const emailPromises = updatedCandidates.map(async (candidate) => {
+        try {
+          if (!candidate.studentEmail) return;
+
+          const serviceId  = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+          const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+          const publicKey  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+          const company   = drive?.company || candidate.company || 'Our Company';
+          const role      = drive?.role    || candidate.role    || 'the position';
+          const name      = candidate.studentName || 'Student';
+          const emailCopy = STATUS_EMAIL_COPY[newStatus] || STATUS_EMAIL_COPY.SHORTLISTED;
+
+          let messageText = emailCopy.message(name, company, role);
+          if (newStatus === 'SHORTLISTED' && candidate.interviewSlotId) {
+            const slot = candidate.interviewSlotId;
+            const start = new Date(slot.startTime).toLocaleString();
+            const end = new Date(slot.endTime).toLocaleString();
+            messageText += `\n\nWe have scheduled an interview slot for you:\nStart Time: ${start}\nEnd Time: ${end}\n\nPlease join on time.`;
+          }
+
+          const params = {
+            to_email: candidate.studentEmail,
+            to_name: name,
+            company,
+            role,
+            status: newStatus,
+            status_label: emailCopy.label,
+            subject: emailCopy.subject(company, role),
+            message: messageText,
+          };
+
+          if (serviceId && templateId && publicKey) {
+            await emailjs.send(serviceId, templateId, params, publicKey);
+          } else {
+            await axios.post(`${API_BASE}/notify-api/status-update`, {
+              studentEmail: candidate.studentEmail,
+              studentName: name,
+              company,
+              role,
+              status: newStatus,
+              subject: params.subject,
+              message: messageText,
+            });
+          }
+        } catch (mailErr) {
+          console.error(`Failed to send bulk email to ${candidate.studentEmail}`, mailErr);
+        }
+      });
+      await Promise.all(emailPromises);
+      showToast(`Sent notification emails to bulk updated candidates.`);
     } catch (err) {
       console.error('Failed to perform bulk update', err);
       showToast('Unable to perform bulk update.', 'error');
@@ -841,9 +917,9 @@ function DriveDetailModal({ drive, onClose, onApply, isTeacher, isStudent, alrea
               <div className="text-center rounded-2xl bg-green-500/10 border border-green-500/20 text-green-300 px-4 py-3">
                 You already applied to this drive.
               </div>
-            ) : isInactive ? (
+            ) : (isInactive || isExpired) ? (
               <div className="text-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3">
-                This drive is closed.
+                This drive is closed/expired.
               </div>
             ) : isCgpaLow ? (
               <div className="text-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300 px-4 py-3">
@@ -1062,7 +1138,7 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
 /* ─────────────── Student Analytics ─────────────── */
 /* ─────────────── Student Analytics Panel ─────────────── */
 // Student dashboard summary showing application counts, status charts, and recent activity
-function StudentAnalytics({ applications = [] }) {
+function StudentAnalytics({ applications = [], drives = [] }) {
   const apps = useMemo(() => applications || [], [applications]);
 
   const counts = useMemo(() => {
@@ -1175,6 +1251,65 @@ function StudentAnalytics({ applications = [] }) {
       </div>
 
 
+      {/* Hiring by Company + Candidate Status Pie */}
+      {drives.length > 0 && (() => {
+        const hireHist = toRows(groupCount(drives.filter(d => d.companyId?.CompanyName || d.company), d => d.companyId?.CompanyName || d.company || 'Unknown'), 'Company', 'Posted Drives');
+        if (hireHist.length === 0) return null;
+        const hireChart = {
+          labels: hireHist.map(h => h.Company),
+          datasets: [{
+            label: 'Posted Drives',
+            data: hireHist.map(h => h['Posted Drives']),
+            backgroundColor: ['#378ADD', '#EF9F27', '#639922', '#E24B4A', '#9D5C9E', '#FF6B6B', '#4ECDC4', '#45B7D1'].slice(0, hireHist.length),
+            borderWidth: 0,
+          }],
+        };
+        const shortlisted = counts.SHORTLISTED || 0;
+        const rejected    = counts.REJECTED    || 0;
+        const candidatePieData = {
+          labels: ['Shortlisted', 'Rejected'],
+          datasets: [{
+            data: [shortlisted, rejected],
+            backgroundColor: ['#EF9F27', '#E24B4A'],
+            borderWidth: 0,
+            hoverOffset: 6,
+          }],
+        };
+        const hasPieData = shortlisted > 0 || rejected > 0;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Hiring by Company</p>
+              <div className="relative h-56">
+                <Bar data={hireChart} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />
+              </div>
+            </div>
+            <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Shortlisted vs Rejected</p>
+              {hasPieData ? (
+                <div className="flex flex-col items-center">
+                  <div className="relative h-40 w-full max-w-[200px]">
+                    <Pie data={candidatePieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+                  </div>
+                  <div className="flex gap-5 mt-4 text-xs text-gray-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#EF9F27' }} />
+                      Shortlisted <span className="text-yellow-400 font-bold ml-1">{shortlisted}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#E24B4A' }} />
+                      Rejected <span className="text-red-400 font-bold ml-1">{rejected}</span>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-8">No candidate data yet.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Timeline */}
       <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Activity timeline</p>
@@ -1214,8 +1349,9 @@ function StudentAnalytics({ applications = [] }) {
 
 /* ─────────────── Teacher Reports Panel ─────────────── */
 // Teacher dashboard for placement reporting, charts, and export actions
-function TeacherReports({ user, profileDetails, drives, showToast }) {
+function TeacherReports({ user, profileDetails, drives = [], allApplications = [], showToast }) {
   const [applications, setApplications] = useState([]);
+  const [allApps, setAllApps] = useState(allApplications);
 
   useEffect(() => {
     const fetchSelectedApplications = async () => {
@@ -1231,14 +1367,23 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
       }
     };
 
+    const fetchAllApplications = async () => {
+      if (allApplications.length > 0) { setAllApps(allApplications); return; }
+      try {
+        const res = await axios.get(`${API_BASE}/student-api/applications`, { withCredentials: true });
+        setAllApps(res.data.payload || []);
+      } catch (err) {
+        console.error('Failed to load all applications for teacher charts', err);
+      }
+    };
+
     fetchSelectedApplications();
+    fetchAllApplications();
   }, []);
 
   const reportOptions = [
     { key: 'branch', title: 'Branch-wise placements', label: 'Branch', valueLabel: 'Placements' },
     { key: 'company', title: 'Company-wise placements', label: 'Company', valueLabel: 'Placements' },
-    { key: 'monthly', title: 'Monthly placements', label: 'Month', valueLabel: 'Placements' },
-    { key: 'yearly', title: 'Yearly placements', label: 'Year', valueLabel: 'Placements' },
   ];
 
   const [activeReport, setActiveReport] = useState('branch');
@@ -1264,29 +1409,6 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
     };
   }, [applications]);
 
-  const monthlyChartData = React.useMemo(() => {
-    const monthData = groupCount(applications, a => {
-      const date = new Date(a.appliedDate);
-      return Number.isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString('default', { month: 'short', year: '2-digit' });
-    });
-    const labels = Object.keys(monthData);
-    const data = Object.values(monthData);
-    return {
-      labels,
-      datasets: [{
-        label: 'Placements',
-        data,
-        borderColor: '#378ADD',
-        backgroundColor: 'rgba(55,138,221,0.08)',
-        borderWidth: 2,
-        pointBackgroundColor: '#378ADD',
-        pointRadius: 4,
-        fill: true,
-        tension: 0.4,
-      }],
-    };
-  }, [applications]);
-
   const companyChartData = React.useMemo(() => {
     const companyData = groupCount(applications, a => a.company || 'Unknown');
     const labels = Object.keys(companyData);
@@ -1302,42 +1424,12 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
     };
   }, [applications]);
 
-  const yearlyChartData = React.useMemo(() => {
-    const yearData = groupCount(applications, a => {
-      const date = new Date(a.appliedDate);
-      return Number.isNaN(date.getTime()) ? 'Unknown' : date.getFullYear();
-    });
-    const labels = Object.keys(yearData);
-    const data = Object.values(yearData);
-    return {
-      labels,
-      datasets: [{
-        label: 'Placements',
-        data,
-        backgroundColor: ['#378ADD', '#EF9F27', '#639922', '#E24B4A', '#9D5C9E', '#FF6B6B'].slice(0, labels.length),
-        borderWidth: 0,
-      }],
-    };
-  }, [applications]);
-
   const reportRows = React.useMemo(() => {
     if (activeReport === 'branch') {
       return toRows(groupCount(applications, a => normalizeBranch(a.studentBranch)), 'Branch', 'Placements');
     }
     if (activeReport === 'company') {
       return toRows(groupCount(applications, a => a.company || 'Unknown'), 'Company', 'Placements');
-    }
-    if (activeReport === 'monthly') {
-      return toRows(groupCount(applications, a => {
-        const date = new Date(a.appliedDate);
-        return Number.isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString('default', { month: 'short', year: '2-digit' });
-      }), 'Month', 'Placements');
-    }
-    if (activeReport === 'yearly') {
-      return toRows(groupCount(applications, a => {
-        const date = new Date(a.appliedDate);
-        return Number.isNaN(date.getTime()) ? 'Unknown' : date.getFullYear();
-      }), 'Year', 'Placements');
     }
     return [];
   }, [activeReport, applications]);
@@ -1360,7 +1452,7 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.3em] text-blue-400 font-semibold mb-3">Teacher dashboard</p>
             <h3 className="text-2xl sm:text-3xl font-bold mb-3">Generate Reports</h3>
-            <p className="text-gray-400 max-w-2xl">View branch-wise, company-wise, monthly, and yearly placement summaries. Export any report as PDF or Excel.</p>
+            <p className="text-gray-400 max-w-2xl">View branch-wise and company-wise placement summaries. Export any report as PDF or Excel.</p>
           </div>
           <div className="flex gap-3 flex-wrap">
             <button onClick={handleExportPDF}
@@ -1375,7 +1467,7 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {reportOptions.map(report => (
           <button key={report.key} onClick={() => setActiveReport(report.key)}
             className={`rounded-3xl border p-5 text-left transition ${activeReport === report.key ? 'border-white bg-white text-black' : 'border-[#222222] bg-[#111111] text-gray-300 hover:border-[#444444]'}`}>
@@ -1386,14 +1478,12 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
         ))}
       </div>
 
-      {(activeReport === 'branch' || activeReport === 'company' || activeReport === 'monthly' || activeReport === 'yearly') && reportRows.length > 0 ? (
+      {(activeReport === 'branch' || activeReport === 'company') && reportRows.length > 0 ? (
         <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
           <h4 className="text-lg font-bold text-white mb-4">{selectedReport.title}</h4>
           <div className="relative h-80">
-            {activeReport === 'branch' && <Pie data={branchChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ddd' } } } }} />}
+            {activeReport === 'branch'  && <Pie data={branchChartData}  options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ddd' } } } }} />}
             {activeReport === 'company' && <Pie data={companyChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ddd' } } } }} />}
-            {activeReport === 'monthly' && <Line data={monthlyChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />}
-            {activeReport === 'yearly' && <Bar data={yearlyChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />}
           </div>
         </div>
       ) : (
@@ -1425,6 +1515,65 @@ function TeacherReports({ user, profileDetails, drives, showToast }) {
           </div>
         </div>
       )}
+
+      {/* Hiring by Company + Candidate Status Pie for Teacher */}
+      {drives.length > 0 && (() => {
+        const hireHist = toRows(groupCount(drives.filter(d => d.companyId?.CompanyName || d.company), d => d.companyId?.CompanyName || d.company || 'Unknown'), 'Company', 'Posted Drives');
+        if (hireHist.length === 0) return null;
+        const hireChart = {
+          labels: hireHist.map(h => h.Company),
+          datasets: [{
+            label: 'Posted Drives',
+            data: hireHist.map(h => h['Posted Drives']),
+            backgroundColor: ['#378ADD', '#EF9F27', '#639922', '#E24B4A', '#9D5C9E', '#FF6B6B', '#4ECDC4', '#45B7D1'].slice(0, hireHist.length),
+            borderWidth: 0,
+          }],
+        };
+        const shortlisted = allApps.filter(a => a.status === 'SHORTLISTED').length;
+        const rejected    = allApps.filter(a => a.status === 'REJECTED').length;
+        const candidatePieData = {
+          labels: ['Shortlisted', 'Rejected'],
+          datasets: [{
+            data: [shortlisted, rejected],
+            backgroundColor: ['#EF9F27', '#E24B4A'],
+            borderWidth: 0,
+            hoverOffset: 6,
+          }],
+        };
+        const hasPieData = shortlisted > 0 || rejected > 0;
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6">
+              <h4 className="text-lg font-bold text-white mb-4">Hiring by Company</h4>
+              <div className="relative h-64">
+                <Bar data={hireChart} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />
+              </div>
+            </div>
+            <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6">
+              <h4 className="text-lg font-bold text-white mb-4">Shortlisted vs Rejected</h4>
+              {hasPieData ? (
+                <div className="flex flex-col items-center">
+                  <div className="relative h-48 w-full max-w-[220px]">
+                    <Pie data={candidatePieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+                  </div>
+                  <div className="flex gap-6 mt-4 text-xs text-gray-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#EF9F27' }} />
+                      Shortlisted <span className="text-yellow-400 font-bold ml-1">{shortlisted}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#E24B4A' }} />
+                      Rejected <span className="text-red-400 font-bold ml-1">{rejected}</span>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-10">No candidate data yet.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
@@ -1467,6 +1616,49 @@ function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
   const [form, setForm] = useState({ CompanyName: '', CompanyId: '', Email: '', Descrption: '' });
   const [editingCompany, setEditingCompany] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [applications, setApplications] = useState([]);
+
+  useEffect(() => {
+    const fetchAllApplications = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/student-api/applications`, { withCredentials: true });
+        setApplications(res.data.payload || []);
+      } catch (err) {
+        console.error("Failed to fetch applications for HR dashboard", err);
+      }
+    };
+    fetchAllApplications();
+  }, []);
+
+  const hrDriveIds = useMemo(() => new Set(drives.map(d => String(d._id || d.id))), [drives]);
+  const hrApplications = useMemo(() => {
+    return applications.filter(app => hrDriveIds.has(String(app.driveid || app.driveId)));
+  }, [applications, hrDriveIds]);
+
+  const stats = useMemo(() => {
+    let shortlisted = 0;
+    let rejected = 0;
+    let selected = 0;
+    let applied = 0;
+    hrApplications.forEach(app => {
+      if (app.status === 'SHORTLISTED') shortlisted++;
+      if (app.status === 'REJECTED') rejected++;
+      if (app.status === 'SELECTED') selected++;
+      if (app.status === 'APPLIED') applied++;
+    });
+    return { shortlisted, rejected, selected, applied };
+  }, [hrApplications]);
+
+  const statusPieData = useMemo(() => {
+    return {
+      labels: ['Applied', 'Shortlisted', 'Selected', 'Rejected'],
+      datasets: [{
+        data: [stats.applied, stats.shortlisted, stats.selected, stats.rejected],
+        backgroundColor: ['#378ADD', '#EF9F27', '#639922', '#E24B4A'],
+        borderWidth: 0,
+      }],
+    };
+  }, [stats]);
 
   const hireHistory = React.useMemo(() => {
     return toRows(groupCount(drives.filter(d => d.companyId?.CompanyName), d => getCompanyName(d)), 'Company', 'Posted Drives');
@@ -1555,34 +1747,46 @@ function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
       <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
         <h3 className="text-2xl font-bold mb-6">HR Analytics Dashboard</h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
             <p className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">Companies</p>
             <p className="text-3xl font-bold text-white">{companies.length}</p>
           </div>
           <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-            <p className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">Active</p>
-            <p className="text-3xl font-bold text-white">{companies.filter(c => c.isActive).length}</p>
-          </div>
-          <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-            <p className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">Inactive</p>
-            <p className="text-3xl font-bold text-white">{companies.filter(c => !c.isActive).length}</p>
-          </div>
-          <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
             <p className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">Drives</p>
             <p className="text-3xl font-bold text-white">{drives.length}</p>
           </div>
+          <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-yellow-500/35 hover:shadow-[0_0_24px_rgba(239,159,39,0.18)]">
+            <p className="text-sm uppercase tracking-[0.2em] text-yellow-500 mb-2">Shortlisted</p>
+            <p className="text-3xl font-bold text-yellow-400">{stats.shortlisted}</p>
+          </div>
+          <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-green-500/35 hover:shadow-[0_0_24px_rgba(78,205,196,0.18)]">
+            <p className="text-sm uppercase tracking-[0.2em] text-green-500 mb-2">Selected</p>
+            <p className="text-3xl font-bold text-green-400">{stats.selected}</p>
+          </div>
+          <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:border-red-500/35 hover:shadow-[0_0_24px_rgba(239,68,68,0.18)]">
+            <p className="text-sm uppercase tracking-[0.2em] text-red-500 mb-2">Rejected</p>
+            <p className="text-3xl font-bold text-red-400">{stats.rejected}</p>
+          </div>
+          <div className="bg-[#0f0f0f] rounded-3xl p-4 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+            <p className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">Active Cos</p>
+            <p className="text-3xl font-bold text-white">{companies.filter(c => c.isActive).length}</p>
+          </div>
         </div>
 
-        <div className="bg-[#0f0f0f] rounded-3xl p-6 border border-[#222222] transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-          <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-4">Hiring by Company</p>
-          {hireHistory.length > 0 ? (
-            <div className="relative h-64">
-              <Bar data={hireChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm text-center py-8">No hiring history available yet.</p>
-          )}
+        <div className="flex justify-center mt-6">
+          <div className="bg-[#0f0f0f] rounded-3xl p-6 border border-[#222222] w-full max-w-md">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-4 text-center">Application Status Breakdown</p>
+            {hrApplications.length > 0 ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative h-64 w-full max-w-[280px]">
+                  <Pie data={statusPieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ddd', padding: 12, font: { size: 12 } } } } }} />
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm text-center py-8">No applicant data available yet.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1713,6 +1917,11 @@ function Mainpage() {
       setApplicationsLoading(false);
     }
   }, [user?.email]);
+
+  const refreshDashboardData = useCallback(() => {
+    fetchUserApplications();
+    fetchDrives();
+  }, [fetchUserApplications]);
 
   // Load the list of drives once when user/profileDetails are ready
   useEffect(() => { fetchDrives(); }, [isHR, user?.id]);
@@ -2116,9 +2325,9 @@ function Mainpage() {
                               <button disabled className="w-full bg-green-500/10 text-green-500 border border-green-500/20 font-semibold py-3 rounded-xl cursor-not-allowed">
                                 ✓ Applied
                               </button>
-                            ) : isInactive ? (
+                            ) : (isInactive || isExpired) ? (
                               <button disabled className="w-full bg-[#1a1a1a] text-gray-500 border border-[#222222] font-semibold py-3 rounded-xl cursor-not-allowed">
-                                Drive Closed
+                                Drive Closed/Expired
                               </button>
                             ) : (() => {
                               if (isCgpaLow)       return <div className="w-full text-center py-3 bg-red-500/10 text-red-500 font-bold rounded-xl text-sm">CGPA Too Low</div>;
@@ -2189,7 +2398,7 @@ function Mainpage() {
 
           {/* ── VIEW: ANALYTICS ── */}
           {activeView === 'analytics' && !isHR && !isTeacher && (
-            <StudentAnalytics applications={userApplications} />
+            <StudentAnalytics applications={userApplications} drives={drives} />
           )}
 
           {activeView === 'analytics' && isTeacher && (
@@ -2204,7 +2413,7 @@ function Mainpage() {
           {activeView === 'settings' && (
             <>
               <h3 className="text-xl sm:text-2xl font-bold mb-5 sm:mb-6">Profile Settings</h3>
-              <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-8 max-w-4xl transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_0_26px_rgba(239,68,68,0.14)] hover:border-red-500/25">
+              <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-8 max-w-4xl">
                 <form onSubmit={handleSettingsSubmit(onUpdateSettings)} className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">Full Name</label>
@@ -2324,7 +2533,12 @@ function Mainpage() {
       {selectedDriveToApply && <ApplyJobModal drive={selectedDriveToApply} onClose={() => setSelectedDriveToApply(null)} onApplied={handleApplied} />}
       {selectedDriveToView && (
         isHR ? (
-          <ViewApplicantsModal drive={selectedDriveToView} onClose={() => setSelectedDriveToView(null)} showToast={showToast} />
+          <ViewApplicantsModal 
+            drive={selectedDriveToView} 
+            onClose={() => setSelectedDriveToView(null)} 
+            showToast={showToast} 
+            onStatusUpdated={refreshDashboardData} 
+          />
         ) : (
           <DriveDetailModal
             drive={selectedDriveToView}

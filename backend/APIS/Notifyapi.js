@@ -24,19 +24,19 @@ const statusMessages = {
 // POST /notify-api/status-update
 notifyapp.post('/status-update', async (req, res) => {
   try {
-    const { studentEmail, studentName, company, role, status } = req.body;
+    const { studentEmail, studentName, company, role, status, subject: customSubject, message: customMessage } = req.body;
 
     if (!studentEmail || !status) {
       return res.status(400).json({ message: 'studentEmail and status are required' });
     }
 
     const template = statusMessages[status];
-    if (!template) {
+    if (!template && !customMessage) {
       return res.status(400).json({ message: `Unknown status: ${status}` });
     }
 
-    const subject = template.subject(company || 'the company', role || 'the role');
-    const text = template.body(studentName || 'Student', company || 'the company', role || 'the role');
+    const subject = customSubject || (template ? template.subject(company || 'the company', role || 'the role') : 'Status Update');
+    const text = customMessage || (template ? template.body(studentName || 'Student', company || 'the company', role || 'the role') : `Your status has been updated to ${status}`);
 
     const result = await sendEmail(studentEmail, subject, text);
 
