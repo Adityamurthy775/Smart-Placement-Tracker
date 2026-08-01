@@ -21,7 +21,7 @@ config(); // ← dotenv must be called before anything else
 
 const app = exp();
 const port = process.env.PORT || 5000;
-const allowedOrigins = [process.env.FRONTEND_URL || 'https://smart-placement-tracker-frontend-1.onrender.com', 'http://localhost:5173'];
+const allowedOrigins = [process.env.FRONTEND_URL || 'https://smart-placement-tracker-ebon.vercel.app', 'http://localhost:5173'];
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
