@@ -1384,7 +1384,9 @@ export default function Dashboard() {
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#12a25a] text-white">
               <Send size={16} />
             </span>
-            <span className="font-heading text-2xl font-bold tracking-tight text-[#0a7d45]">Quixotic</span>
+            <span className="font-heading text-2xl font-bold tracking-tight text-[#0a7d45]">
+            Smart Placement Tracker
+          </span>
           </Link>
 
           <nav className="flex flex-wrap gap-1.5 rounded-2xl border border-[#eceff2] bg-white p-1.5">
@@ -1407,25 +1409,25 @@ export default function Dashboard() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-white px-3 py-2">
-              <Search size={14} className="text-[#8a97a5]" />
+          <div className="flex shrink-0 items-center gap-3">
+            <label className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#eceff2] bg-white px-4">
+              <Search size={16} className="shrink-0 text-[#8a97a5]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search applications"
-                className="w-32 bg-transparent text-sm text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
+                className="w-40 border-0 bg-transparent py-0 text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
               />
             </label>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0a7d45] text-sm font-bold text-white">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-base font-bold text-white">
               {initials(user?.name)}
             </span>
             <button
               type="button"
               onClick={async () => { await logout(); navigate('/login', { replace: true }); }}
-              className="flex items-center gap-1.5 rounded-full border border-[#eceff2] bg-white px-3 py-2 text-sm font-semibold text-[#5a6b7d] transition hover:border-[#fca5a5] hover:text-[#b42318]"
+              className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-[#eceff2] bg-white px-5 text-base font-semibold text-[#5a6b7d] transition hover:border-[#fca5a5] hover:text-[#b42318]"
             >
-              <LogOut size={13} /> Logout
+              <LogOut size={14} /> Logout
             </button>
           </div>
         </div>
