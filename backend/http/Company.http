@@ -1,0 +1,37 @@
+###add the comapny details
+POST http://localhost:5000/company-api/company
+Content-Type: application/json
+
+{
+  "CompanyName":"infosys",
+  "CompanyId":123456,
+  "Email":"infosys@gmail.com",
+  "Descrption":"good in python and java and have good ml skills"
+}
+
+
+###get all the comapny jobs
+GET http://localhost:5000/company-api/company
+
+
+###get the deatails of the compnay based on the name
+GET http://localhost:5000/company-api/company/infosys
+
+###update the deatils
+PUT http://localhost:5000/company-api/company/123456
+Content-Type: application/json
+
+{
+  "CompanyName":"TCS"
+}
+
+###soft delete
+
+PATCH http://localhost:5000/company-api/company/123456
+Content-Type: application/json
+
+{
+  "isActive":"false"
+}
+
+

@@ -1,0 +1,52 @@
+### student creation
+POST http://localhost:5000/student-api/student
+Content-Type: application/json
+
+{
+    "Deatils":"6a0355e951ada97d5c5738d6",
+    "Rollno": 11,
+    "Section":"A",
+    "CGPA": 9,
+    "Branch": "DS",
+    "Backlogs": 0,
+    "Skills": [
+        { "name": "python", "level": "Intermediate" },
+        { "name": "ML", "level": "Beginner" }
+    ]
+}
+
+
+### student deatails
+GET http://localhost:5000/student-api/student
+
+
+### get the student by id
+GET http://localhost:5000/student-api/student/9
+
+### update student details
+PUT http://localhost:5000/student-api/student/11
+Content-Type: application/json
+
+{
+
+    "CGPA": 9,
+    "Branch": "DS",
+    "Backlogs": 0,
+    "Skills": [
+        { "name": "python", "level": "Intermediate" },
+        { "name": "ML", "level": "Beginner" },
+        { "name":" Java","level":"Beginner"}
+    ]
+
+}
+
+###
+DELETE http://localhost:5000/student-api/student/11
+
+###soft delete
+PATCH http://localhost:5000/student-api/student/11
+Content-Type: application/json
+
+{
+    "isacivte":"true"
+}

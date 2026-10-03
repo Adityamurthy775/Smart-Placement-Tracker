@@ -1,0 +1,43 @@
+###add a intership drive
+POST http://localhost:5000/drive-api/drive
+Content-Type: application/json
+
+{
+  "companyId":"6a0b3f1b674728fbe672da02",
+  "Title":"Summer Intership",
+  "JobRole":"Full-Time",
+  "Package":"12LPA",
+  "LastDate":"2026-01-01",
+  "MinCGPA":7,
+  "AllowedBranch":["CSE","IT","AIML","DS"],
+  "status":"UPCOMING",
+  "isActive":true
+}
+
+###get all the drives
+GET http://localhost:5000/drive-api/drive
+
+
+
+###get the company drive by name
+GET http://localhost:5000/drive-api/drive/infosys
+
+
+###drive with allowed cgpa
+GET http://localhost:5000/drive-api/drive/cgpa/8
+
+###updated the deatils
+PUT http://localhost:5000/drive-api/drive/6a0b3f3d674728fbe672da04
+Content-Type: application/json
+
+{
+  "status":"ONGOING"
+}
+
+###softdelete
+PATCH  http://localhost:5000/drive-api/drive/6a0b3f3d674728fbe672da04
+Content-Type: application/json
+
+{
+  "isActive":"false"
+}

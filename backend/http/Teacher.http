@@ -1,0 +1,47 @@
+### create a teacher
+POST http://localhost:5000/teacher-api/teacher
+Content-Type: application/json
+
+{
+"Deatils":"6a09bd81c08223deeac79db1",
+"Id":123,
+"designation":"Professor",
+"department":"CSE"
+}
+
+
+### get all the teachers
+GET http://localhost:5000/teacher-api/teacher
+
+
+
+###get the teacher by id
+
+GET http://localhost:5000/teacher-api/teacher/123
+
+
+###update the teacher info
+PUT http://localhost:5000/teacher-api/teacher/1124
+Content-Type: application/json
+
+{
+    "Name": "kumar",
+    "Email": "siva124@gmail.com",
+    "Password":123456,
+    "Id": 1124,
+    "designation": "Professor",
+    "department": "MECH"
+}
+
+###delete the teacher
+DELETE http://localhost:5000/teacher-api/teacher/1124
+
+
+
+###soft delete
+PATCH http://localhost:5000/teacher-api/teacher/123
+Content-Type: application/json
+
+{
+    "isActive":true
+}
