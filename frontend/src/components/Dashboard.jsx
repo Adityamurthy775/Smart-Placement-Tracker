@@ -10,6 +10,7 @@ import { Area, AreaChart } from '@/components/charts/area-chart';
 import { Grid } from '@/components/charts/grid';
 import { XAxis } from '@/components/charts/x-axis';
 import { ChartTooltip as BklitChartTooltip } from '@/components/charts/tooltip';
+import { OpportunityCard } from '@/components/ui/card-12';
 import { UserContext } from '../contexts/UserContext';
 import { API_BASE, cn } from '@/lib/utils';
 import {
@@ -19,8 +20,12 @@ import {
 } from 'lucide-react';
 
 /* ───────────────────────────── design tokens ───────────────────────────── */
+/* Dashboard colours, all in one place. The app shell (page ground, inner panel,
+   brand green, borders) is these four lines — everything else is inline. */
+const PAGE_BG = '#e4e8ec';      // the ground around the panel
+const PANEL_BG = '#fafbfc';     // the panel itself
 const BRAND = '#12a25a';
-const BRAND_DARK = '#0a7d45';
+const BRAND_DARK = '#0a7d45';  // primary buttons, active nav, avatars
 const BAR_LIGHT = '#9ed9bd';
 const CARD = 'rounded-3xl border border-[#eceff2] bg-white';
 const ICON_BTN = 'flex h-9 w-9 items-center justify-center rounded-xl border border-[#eceff2] bg-white text-[#5a6b7d]';
@@ -655,6 +660,24 @@ function driveEligibility(drive, cgpa, branch) {
 
 function DrivesView({ drives, applications, cgpa, branch, onApply, applying, notice }) {
   const [q, setQ] = useState('');
+  // "Save for later" — a list of drive ids in localStorage, so it survives the
+  // tab without asking the backend for a table it does not have.
+  const [saved, setSaved] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem('spt.savedDrives') || '[]'));
+    } catch {
+      return new Set();
+    }
+  });
+  const toggleSaved = (id) => {
+    setSaved((prev) => {
+      const next = new Set(prev);
+      if (next.has(String(id))) next.delete(String(id));
+      else next.add(String(id));
+      localStorage.setItem('spt.savedDrives', JSON.stringify([...next]));
+      return next;
+    });
+  };
   const applied = useMemo(
     () => new Set(applications.map((a) => String(a.driveid || a.driveId || ''))),
     [applications],
@@ -704,7 +727,7 @@ function DrivesView({ drives, applications, cgpa, branch, onApply, applying, not
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {rows.map((drive) => {
             const company = drive.companyId?.CompanyName || 'Company';
             const lastDate = parseDate(drive.LastDate);
@@ -713,60 +736,50 @@ function DrivesView({ drives, applications, cgpa, branch, onApply, applying, not
               : null;
             const eligible = driveEligibility(drive, cgpa, branch);
             const already = applied.has(String(drive._id));
+            const isSaved = saved.has(String(drive._id));
+            const minCgpa = Number(drive.MinCGPA || 0);
+            // ponytail: heuristic, not a real score — `eligible` is the honest
+            // signal. This only grades headroom over the drive's CGPA bar.
+            const matchPercentage = eligible
+              ? Math.min(100, Math.round(75 + (cgpa - minCgpa) * 5))
+              : Math.round(Math.min(60, (cgpa / (minCgpa || 10)) * 60));
             return (
-              <div key={drive._id} className={cn(CARD, 'flex flex-col gap-3 p-5')}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-xs font-bold text-white">
-                      {initials(company)}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-[#0f172a]">{company}</span>
-                      <span className="block truncate text-xs text-[#8a97a5]">{drive.Title}</span>
-                    </span>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-[#e7f7ee] px-2.5 py-1 text-[11px] font-bold text-[#0a7d45]">
-                    {drive.Package}
-                  </span>
-                </div>
-
-                <dl className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div>
-                    <dt className="text-[#8a97a5]">Role</dt>
-                    <dd className="font-semibold text-[#0f172a]">{drive.JobRole}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[#8a97a5]">Min CGPA</dt>
-                    <dd className="font-semibold text-[#0f172a]">{drive.MinCGPA}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[#8a97a5]">Branches</dt>
-                    <dd className="font-semibold text-[#0f172a]">
-                      {(drive.AllowedBranch || []).join(', ') || '—'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[#8a97a5]">Closes</dt>
-                    <dd className="font-semibold text-[#0f172a]">
-                      {lastDate ? `${lastDate.toLocaleDateString()} · ${daysLeft}d` : '—'}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="mt-auto flex items-center justify-between gap-3 pt-1">
-                  <span className={cn('text-[11px] font-bold', eligible ? 'text-[#0a7d45]' : 'text-[#b42318]')}>
-                    {eligible ? 'You are eligible' : 'Not eligible for you'}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={!eligible || already || applying}
-                    onClick={() => onApply(drive)}
-                    className="rounded-full bg-[#0a7d45] px-4 py-2 text-xs font-bold text-white transition disabled:cursor-not-allowed disabled:bg-[#d7dee5]"
-                  >
-                    {already ? 'Applied' : applying ? 'Sending…' : 'Apply'}
-                  </button>
-                </div>
-              </div>
+              <OpportunityCard
+                key={drive._id}
+                status={daysLeft === 0 ? 'Closing' : daysLeft !== null && daysLeft <= 7 ? 'Urgent' : 'Open'}
+                postedBy={{
+                  name: company,
+                  avatarUrl: drive.companyId?.profileImage || '',
+                  company: drive.Title || 'Campus drive',
+                  location: drive.companyId?.Location || '',
+                }}
+                packageLabel={drive.Package || '—'}
+                role={drive.JobRole || 'Open role'}
+                deadline={
+                  lastDate
+                    ? `${lastDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${daysLeft}d left`
+                    : 'not set'
+                }
+                matchPercentage={matchPercentage}
+                eligible={eligible}
+                tags={[
+                  `Min CGPA ${drive.MinCGPA}`,
+                  ...(drive.AllowedBranch || []).map((b) => String(b).toUpperCase()),
+                ]}
+                description={drive.description || ''}
+                recruiter={{
+                  name: drive.hrId?.name || 'Placement Cell',
+                  avatarUrl: drive.hrId?.profileImage || '',
+                  company,
+                  location: drive.companyId?.Location || '',
+                }}
+                onApply={() => onApply(drive)}
+                onSave={() => toggleSaved(drive._id)}
+                applied={already}
+                applying={applying}
+                saved={isSaved}
+                className="max-w-none"
+              />
             );
           })}
         </div>
@@ -1244,8 +1257,8 @@ export default function Dashboard() {
   if (authTimedOut && !user) return null;
 
   return (
-    <div className="min-h-screen bg-[#e4e8ec] p-4 sm:p-8">
-      <div className="mx-auto max-w-[1400px] rounded-[32px] bg-[#fafbfc] p-5 sm:p-7">
+    <div className="min-h-screen p-4 sm:p-8" style={{ backgroundColor: PAGE_BG }}>
+      <div className="mx-auto max-w-[1400px] rounded-[32px] p-5 sm:p-7" style={{ backgroundColor: PANEL_BG }}>
         {/* top bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link to="/dashboard" className="flex items-center gap-2.5">
@@ -1263,13 +1276,13 @@ export default function Dashboard() {
                 onClick={() => setTab(key)}
                 aria-current={tab === key}
                 className={cn(
-                  'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition',
+                  'flex items-center gap-2.5 rounded-2xl px-5 py-3 text-base font-bold transition',
                   tab === key
                     ? 'bg-[#12a25a] text-white shadow-[0_2px_8px_rgba(18,162,90,0.25)]'
                     : 'text-[#5a6b7d] hover:bg-[#f3f5f7] hover:text-[#0f172a]',
                 )}
               >
-                <Icon size={16} />
+                <Icon size={18} />
                 {label}
               </button>
             ))}
@@ -1348,13 +1361,13 @@ export default function Dashboard() {
                   title={label}
                   aria-label={label}
                   className={cn(
-                    'flex h-11 w-11 items-center justify-center rounded-xl transition',
+                    'flex h-12 w-12 items-center justify-center rounded-2xl transition',
                     tab === key
                       ? 'bg-[#12a25a] text-white'
                       : 'text-[#8a97a5] hover:bg-[#f3f5f7] hover:text-[#0a7d45]',
                   )}
                 >
-                  <Icon size={18} />
+                  <Icon size={20} />
                 </button>
               ))}
             </div>
