@@ -181,20 +181,20 @@ function ProfileFormModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl w-full max-w-md p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-white mb-2">Complete Your Profile</h2>
-        <p className="text-gray-400 mb-6 text-sm">Please provide a few more details to continue.</p>
+      <div className="bg-white border border-[#c3d7ec] rounded-2xl w-full max-w-md p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-[#071005] mb-2">Complete Your Profile</h2>
+        <p className="text-[#5a6b7d] mb-6 text-sm">Please provide a few more details to continue.</p>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div>
-            <label className="block text-gray-400 text-sm mb-1 ml-1">Profile Image</label>
+            <label className="block text-[#5a6b7d] text-sm mb-1 ml-1">Profile Image</label>
             <input type="file" accept="image/png,image/jpeg,image/webp"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
+              className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
               {...register('profileImage')} />
             <p className="text-xs text-gray-500 mt-1">Optional — leave blank for default avatar</p>
           </div>
           <div>
             <input type="text" placeholder="Phone Number"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+              className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
               {...register('phone', { required: 'Phone number is required' })} />
             {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>}
           </div>
@@ -202,7 +202,7 @@ function ProfileFormModal({ onClose }) {
           {role === 'hr' && (
             <div>
               <input type="text" placeholder="Company Name"
-                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                 {...register('companyName', { required: 'Company name is required' })} />
               {errors.companyName && <p className="text-red-400 text-xs mt-1">{errors.companyName.message}</p>}
             </div>
@@ -211,7 +211,7 @@ function ProfileFormModal({ onClose }) {
           {role === 'teacher' && (
             <>
               <div>
-                <select className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                <select className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('designation', { required: 'Designation is required' })}>
                   <option value="">Select Designation</option>
                   <option value="Assistant Professor">Assistant Professor</option>
@@ -223,7 +223,7 @@ function ProfileFormModal({ onClose }) {
                 {errors.designation && <p className="text-red-400 text-xs mt-1">{errors.designation.message}</p>}
               </div>
               <div>
-                <select className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                <select className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('department', { required: 'Department is required' })}>
                   <option value="">Select Department</option>
                   <option value="CSE">CSE</option>
@@ -244,30 +244,30 @@ function ProfileFormModal({ onClose }) {
             <>
               <div>
                 <input type="text" placeholder="CGPA / Percentage"
-                  className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                  className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('cgpa', { required: 'CGPA is required' })} />
                 {errors.cgpa && <p className="text-red-400 text-xs mt-1">{errors.cgpa.message}</p>}
               </div>
               <div>
                 <input type="text" placeholder="Branch (e.g. CSE,EEE,ECE)"
-                  className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                  className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('branch', { required: 'Branch is required' })} />
                 {errors.branch && <p className="text-red-400 text-xs mt-1">{errors.branch.message}</p>}
               </div>
               <div>
                 <input type="text" placeholder="Key Skills (comma separated)"
-                  className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                  className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('skills', { required: 'Skills are required' })} />
                 {errors.skills && <p className="text-red-400 text-xs mt-1">{errors.skills.message}</p>}
               </div>
               <div>
                 <input type="text" placeholder="GitHub Profile URL (Optional)"
-                  className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                  className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('github')} />
               </div>
               <div>
                 <input type="text" placeholder="LinkedIn Profile URL (Optional)"
-                  className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                  className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                   {...register('linkedin')} />
               </div>
             </>
@@ -338,25 +338,25 @@ function ApplyJobModal({ drive, onClose, onApplied }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl w-full max-w-md p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-white mb-2">Apply for {drive.company}</h2>
-        <p className="text-gray-400 mb-6 text-sm">Role: {drive.role} · {drive.salary}</p>
+      <div className="bg-white border border-[#c3d7ec] rounded-2xl w-full max-w-md p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-[#071005] mb-2">Apply for {drive.company}</h2>
+        <p className="text-[#5a6b7d] mb-6 text-sm">Role: {drive.role} · {drive.salary}</p>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div>
-            <label className="block text-gray-400 text-sm mb-2 ml-1">Upload Resume (PDF)</label>
+            <label className="block text-[#5a6b7d] text-sm mb-2 ml-1">Upload Resume (PDF)</label>
             <input type="file" accept=".pdf,.doc,.docx"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
+              className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
               {...register('resume', { required: 'Resume is required to apply' })} />
             {errors.resume && <p className="text-red-400 text-xs mt-1">{errors.resume.message}</p>}
           </div>
           <button type="button" onClick={() => window.open(ATS_CHECKER_URL, '_blank')}
-            className="w-full bg-[#111111] border border-[#333333] text-white font-semibold py-3 rounded-full hover:bg-[#1a1a1a] transition">
+            className="w-full bg-white border border-[#c3d7ec] text-[#071005] font-semibold py-3 rounded-full hover:bg-white transition">
             Check Resume with ATS
           </button>
           {/* Redirects the user to the configured ATS checker URL in a new tab */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
             <button type="button" onClick={onClose} disabled={applying}
-              className="flex-1 bg-transparent border border-[#333333] text-white font-semibold py-3 rounded-full hover:bg-[#1a1a1a] transition disabled:opacity-50">
+              className="flex-1 bg-transparent border border-[#c3d7ec] text-[#071005] font-semibold py-3 rounded-full hover:bg-white transition disabled:opacity-50">
               Cancel
             </button>
             <button type="submit" disabled={applying}
@@ -479,34 +479,34 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
       SELECTED:    'bg-blue-900/20 text-blue-300 border-blue-800/30',
       REJECTED:    'bg-red-500/10 text-red-400 border-red-500/20',
     };
-    return map[s] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    return map[s] || 'bg-gray-500/10 text-[#5a6b7d] border-gray-500/20';
   };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl w-full max-w-2xl p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-[#c3d7ec] rounded-2xl w-full max-w-2xl p-5 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Candidate Details</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+          <h2 className="text-2xl font-bold text-[#071005]">Candidate Details</h2>
+          <button onClick={onClose} className="text-[#5a6b7d] hover:text-[#071005] text-xl font-bold">&times;</button>
         </div>
 
         <div className="flex flex-col gap-4">
           {/* User info */}
-          <div className="bg-[#1a1a1a] border border-[#333333] rounded-2xl p-4 sm:p-6">
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4 sm:p-6">
             <div className="flex items-center gap-4 mb-4 min-w-0">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 border-2 border-[#333333] flex items-center justify-center text-2xl font-bold text-white">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 border-2 border-[#c3d7ec] flex items-center justify-center text-2xl font-bold text-white">
                 {candidate.studentName?.[0] || '?'}
               </div>
               <div className="min-w-0">
-                <h3 className="text-xl font-bold text-white truncate">{candidate.studentName}</h3>
-                <p className="text-gray-400 text-sm break-all">{candidate.studentEmail}</p>
+                <h3 className="text-xl font-bold text-[#071005] truncate">{candidate.studentName}</h3>
+                <p className="text-[#5a6b7d] text-sm break-all">{candidate.studentEmail}</p>
               </div>
             </div>
             <div className="flex gap-3 flex-wrap">
-              <span className="bg-[#111111] border border-[#333333] px-3 py-1 rounded-full text-sm text-gray-300">
+              <span className="bg-white border border-[#c3d7ec] px-3 py-1 rounded-full text-sm text-[#5a6b7d]">
                 CGPA: {candidate.studentCgpa}
               </span>
-              <span className="bg-[#111111] border border-[#333333] px-3 py-1 rounded-full text-sm text-gray-300">
+              <span className="bg-white border border-[#c3d7ec] px-3 py-1 rounded-full text-sm text-[#5a6b7d]">
                 Applied: {candidate.appliedDate}
               </span>
               <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${statusBadge(candidate.status)}`}>
@@ -516,52 +516,52 @@ function CandidateDetailModal({ candidate, drive, onClose, onUpdateStatus, showT
           </div>
 
           {/* Additional details */}
-          <div className="bg-[#1a1a1a] border border-[#333333] rounded-2xl p-4 sm:p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-            <h4 className="text-white font-bold mb-3">Additional Details</h4>
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4 sm:p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+            <h4 className="text-[#071005] font-bold mb-3">Additional Details</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="bg-[#111111] border border-[#333333] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+              <div className="bg-white border border-[#c3d7ec] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
                 <p className="text-gray-500 text-xs mb-1">Phone</p>
-                <p className="text-gray-200">{candidate.studentPhone || 'Not provided'}</p>
+                <p className="text-[#5a6b7d]">{candidate.studentPhone || 'Not provided'}</p>
               </div>
-              <div className="bg-[#111111] border border-[#333333] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+              <div className="bg-white border border-[#c3d7ec] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
                 <p className="text-gray-500 text-xs mb-1">Branch</p>
-                <p className="text-gray-200">{candidate.studentBranch || 'Not provided'}</p>
+                <p className="text-[#5a6b7d]">{candidate.studentBranch || 'Not provided'}</p>
               </div>
-              <div className="bg-[#111111] border border-[#333333] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+              <div className="bg-white border border-[#c3d7ec] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
                 <p className="text-gray-500 text-xs mb-1">GitHub</p>
                 {candidate.studentGithub ? (
                   <a href={candidate.studentGithub} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-200 break-all">{candidate.studentGithub}</a>
                 ) : (
-                  <p className="text-gray-200">Not provided</p>
+                  <p className="text-[#5a6b7d]">Not provided</p>
                 )}
               </div>
-              <div className="bg-[#111111] border border-[#333333] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+              <div className="bg-white border border-[#c3d7ec] rounded-xl p-3 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
                 <p className="text-gray-500 text-xs mb-1">LinkedIn</p>
                 {candidate.studentLinkedin ? (
                   <a href={candidate.studentLinkedin} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-200 break-all">{candidate.studentLinkedin}</a>
                 ) : (
-                  <p className="text-gray-200">Not provided</p>
+                  <p className="text-[#5a6b7d]">Not provided</p>
                 )}
               </div>
-              <div className="bg-[#111111] border border-[#333333] rounded-xl p-3 sm:col-span-2 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+              <div className="bg-white border border-[#c3d7ec] rounded-xl p-3 sm:col-span-2 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
                 <p className="text-gray-500 text-xs mb-1">Skills</p>
-                <p className="text-gray-200">{candidate.studentSkills || 'Not provided'}</p>
+                <p className="text-[#5a6b7d]">{candidate.studentSkills || 'Not provided'}</p>
               </div>
             </div>
           </div>
 
           {/* Resume */}
-          <div className="bg-[#1a1a1a] border border-[#333333] rounded-2xl p-4 sm:p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-            <h4 className="text-white font-bold mb-3">Resume</h4>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#111111] border border-[#333333] rounded-xl p-4 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4 sm:p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+            <h4 className="text-[#071005] font-bold mb-3">Resume</h4>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#c3d7ec] rounded-xl p-4 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
                   <span className="text-red-400 text-xs font-bold">PDF</span>
                 </div>
-                <span className="text-gray-300 text-sm break-all">{candidate.resumeName || 'resume.pdf'}</span>
+                <span className="text-[#5a6b7d] text-sm break-all">{candidate.resumeName || 'resume.pdf'}</span>
               </div>
               <button onClick={openResume}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition ${canViewResume ? 'bg-white text-black hover:bg-gray-200' : 'bg-[#222222] text-gray-500 cursor-not-allowed'}`}>
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition ${canViewResume ? 'bg-white text-black hover:bg-gray-200' : 'bg-[#f5f9ff] text-gray-500 cursor-not-allowed'}`}>
                 View
               </button>
             </div>
@@ -738,30 +738,30 @@ function ViewApplicantsModal({ drive, onClose, showToast, onStatusUpdated }) {
       SELECTED:    'bg-blue-900/20 text-blue-300 border-blue-800/30',
       REJECTED:    'bg-red-500/10 text-red-400 border-red-500/20',
     };
-    return map[s] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    return map[s] || 'bg-gray-500/10 text-[#5a6b7d] border-gray-500/20';
   };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl w-full max-w-4xl p-5 sm:p-8 max-h-[85vh] flex flex-col">
+      <div className="bg-white border border-[#c3d7ec] rounded-2xl w-full max-w-4xl p-5 sm:p-8 max-h-[85vh] flex flex-col">
         <div className="flex justify-between items-start gap-4 mb-4">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold text-white mb-1">Applicants — {drive.company}</h2>
-            <p className="text-gray-400 text-sm">Role: {drive.role} · {filteredApplicants.length} applicant(s)</p>
+            <h2 className="text-2xl font-bold text-[#071005] mb-1">Applicants — {drive.company}</h2>
+            <p className="text-[#5a6b7d] text-sm">Role: {drive.role} · {filteredApplicants.length} applicant(s)</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={handleExportCSV}
               className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
               Export Excel
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-white font-bold text-xl">&times;</button>
+            <button onClick={onClose} className="text-[#5a6b7d] hover:text-[#071005] font-bold text-xl">&times;</button>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4 p-4 bg-[#1a1a1a] rounded-xl border border-[#333333]">
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 p-4 bg-white rounded-xl border border-[#c3d7ec]">
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            className="bg-[#111111] border border-[#333333] text-white px-3 py-2 rounded-lg text-sm">
+            className="bg-white border border-[#c3d7ec] text-[#071005] px-3 py-2 rounded-lg text-sm">
             <option value="">All Statuses</option>
             <option value="APPLIED">Applied</option>
             <option value="SHORTLISTED">Shortlisted</option>
@@ -770,16 +770,16 @@ function ViewApplicantsModal({ drive, onClose, showToast, onStatusUpdated }) {
           </select>
           <input type="number" step="0.1" placeholder="Min CGPA" value={filterCgpa}
             onChange={e => setFilterCgpa(e.target.value)}
-            className="bg-[#111111] border border-[#333333] text-white px-3 py-2 rounded-lg text-sm w-32" />
+            className="bg-white border border-[#c3d7ec] text-[#071005] px-3 py-2 rounded-lg text-sm w-32" />
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-            className="bg-[#111111] border border-[#333333] text-white px-3 py-2 rounded-lg text-sm">
+            className="bg-white border border-[#c3d7ec] text-[#071005] px-3 py-2 rounded-lg text-sm">
             <option value="">Sort By...</option>
             <option value="cgpa">Highest CGPA</option>
             <option value="name">Name (A-Z)</option>
           </select>
           {selectedAppIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm text-gray-400 mr-2">{selectedAppIds.size} selected</span>
+              <span className="text-sm text-[#5a6b7d] mr-2">{selectedAppIds.size} selected</span>
               <button onClick={() => handleBulkUpdate('SHORTLISTED')}
                 className="bg-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-yellow-500/40">Shortlist</button>
               <button onClick={() => handleBulkUpdate('SELECTED')}
@@ -798,19 +798,19 @@ function ViewApplicantsModal({ drive, onClose, showToast, onStatusUpdated }) {
           ) : filteredApplicants.length > 0 ? (
             <div className="flex flex-col gap-3">
               {filteredApplicants.map((app, idx) => (
-                <div key={idx} className="bg-[#1a1a1a] border border-[#333333] p-4 rounded-xl flex items-center gap-4 hover:border-[#444444] transition">
+                <div key={idx} className="bg-white border border-[#c3d7ec] p-4 rounded-xl flex items-center gap-4 hover:border-[#c3d7ec] transition">
                   <input type="checkbox" checked={selectedAppIds.has(app._id)}
                     onChange={() => toggleSelect(app._id)}
-                    className="w-5 h-5 rounded border-[#444444] bg-[#111111] checked:bg-blue-500 cursor-pointer" />
+                    className="w-5 h-5 rounded border-[#c3d7ec] bg-white checked:bg-blue-500 cursor-pointer" />
                   <div className="flex-1 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 cursor-pointer"
                     onClick={() => setSelectedCandidate(app)}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#222222] border border-[#333333] flex items-center justify-center font-bold">
+                      <div className="w-10 h-10 rounded-full bg-[#f5f9ff] border border-[#c3d7ec] flex items-center justify-center font-bold">
                         {app.studentName?.[0] || '?'}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-white font-bold truncate">{app.studentName}</h4>
-                        <p className="text-sm text-gray-400">CGPA: {app.studentCgpa} · {app.studentEmail}</p>
+                        <h4 className="text-[#071005] font-bold truncate">{app.studentName}</h4>
+                        <p className="text-sm text-[#5a6b7d]">CGPA: {app.studentCgpa} · {app.studentEmail}</p>
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${statusBadge(app.status)}`}>
@@ -822,9 +822,9 @@ function ViewApplicantsModal({ drive, onClose, showToast, onStatusUpdated }) {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#333333] flex items-center justify-center mb-4 text-2xl">◎</div>
-              <h4 className="text-white font-semibold mb-2">No applicants match criteria.</h4>
-              <p className="text-gray-400 text-sm max-w-sm">Try clearing the filters or wait for students to apply to this drive.</p>
+              <div className="w-16 h-16 rounded-full bg-white border border-[#c3d7ec] flex items-center justify-center mb-4 text-2xl">◎</div>
+              <h4 className="text-[#071005] font-semibold mb-2">No applicants match criteria.</h4>
+              <p className="text-[#5a6b7d] text-sm max-w-sm">Try clearing the filters or wait for students to apply to this drive.</p>
             </div>
           )}
         </div>
@@ -858,52 +858,52 @@ function DriveDetailModal({ drive, onClose, onApply, isTeacher, isStudent, alrea
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-[#c3d7ec] rounded-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-2xl font-bold text-white">Drive Details</h2>
-            <p className="text-gray-400 text-sm mt-1">Review this drive before taking action.</p>
+            <h2 className="text-2xl font-bold text-[#071005]">Drive Details</h2>
+            <p className="text-[#5a6b7d] text-sm mt-1">Review this drive before taking action.</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-[#5a6b7d] hover:text-[#071005] text-3xl leading-none">&times;</button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div className="bg-[#1a1a1a] border border-[#222222] rounded-2xl p-4">
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Company</p>
-            <p className="text-white font-semibold">{drive.company || drive.companyId?.CompanyName || 'Unknown'}</p>
+            <p className="text-[#071005] font-semibold">{drive.company || drive.companyId?.CompanyName || 'Unknown'}</p>
           </div>
-          <div className="bg-[#1a1a1a] border border-[#222222] rounded-2xl p-4">
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Role</p>
-            <p className="text-white font-semibold">{drive.role || drive.JobRole || 'N/A'}</p>
+            <p className="text-[#071005] font-semibold">{drive.role || drive.JobRole || 'N/A'}</p>
           </div>
-          <div className="bg-[#1a1a1a] border border-[#222222] rounded-2xl p-4">
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Package</p>
-            <p className="text-white font-semibold">{drive.salary || drive.Package || 'N/A'}</p>
+            <p className="text-[#071005] font-semibold">{drive.salary || drive.Package || 'N/A'}</p>
           </div>
-          <div className="bg-[#1a1a1a] border border-[#222222] rounded-2xl p-4">
+          <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">Deadline</p>
-            <p className="text-white font-semibold">{drive.LastDate ? new Date(drive.LastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+            <p className="text-[#071005] font-semibold">{drive.LastDate ? new Date(drive.LastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</p>
           </div>
         </div>
 
-        <div className="bg-[#1a1a1a] border border-[#222222] rounded-2xl p-4 mb-6">
+        <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4 mb-6">
           <p className="text-sm text-gray-500 mb-3">Description</p>
-          <p className="text-gray-300 text-sm leading-relaxed">{drive.description || drive.Title || 'No description available.'}</p>
+          <p className="text-[#5a6b7d] text-sm leading-relaxed">{drive.description || drive.Title || 'No description available.'}</p>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-xs bg-[#1a1a1a] border border-[#333333] px-3 py-1.5 rounded-full text-gray-300">Min CGPA: {drive.MinCGPA || 'N/A'}</span>
-          <span className="text-xs bg-[#1a1a1a] border border-[#333333] px-3 py-1.5 rounded-full text-gray-300">{deadlineLabel}</span>
-          <span className="text-xs bg-[#1a1a1a] border border-[#333333] px-3 py-1.5 rounded-full text-gray-300">Status: {isInactive ? 'Closed' : isExpired ? 'Expired' : 'Open'}</span>
+          <span className="text-xs bg-white border border-[#c3d7ec] px-3 py-1.5 rounded-full text-[#5a6b7d]">Min CGPA: {drive.MinCGPA || 'N/A'}</span>
+          <span className="text-xs bg-white border border-[#c3d7ec] px-3 py-1.5 rounded-full text-[#5a6b7d]">{deadlineLabel}</span>
+          <span className="text-xs bg-white border border-[#c3d7ec] px-3 py-1.5 rounded-full text-[#5a6b7d]">Status: {isInactive ? 'Closed' : isExpired ? 'Expired' : 'Open'}</span>
         </div>
 
-        <div className="bg-[#1a1a1a] border border-[#222222] rounded-2xl p-4 mb-6">
+        <div className="bg-white border border-[#c3d7ec] rounded-2xl p-4 mb-6">
           <p className="text-sm text-gray-500 mb-3">Allowed Branches</p>
           <div className="flex flex-wrap gap-2">
             {branches.length > 0 ? branches.map((branch, idx) => (
-              <span key={idx} className="text-xs px-3 py-1 rounded-full bg-[#222222] text-gray-300 border border-[#333333]">{branch}</span>
+              <span key={idx} className="text-xs px-3 py-1 rounded-full bg-[#f5f9ff] text-[#5a6b7d] border border-[#c3d7ec]">{branch}</span>
             )) : (
-              <span className="text-sm text-gray-400">All branches allowed</span>
+              <span className="text-sm text-[#5a6b7d]">All branches allowed</span>
             )}
           </div>
         </div>
@@ -936,7 +936,7 @@ function DriveDetailModal({ drive, onClose, onApply, isTeacher, isStudent, alrea
         )}
 
         {isTeacher && (
-          <div className="rounded-2xl bg-[#1a1a1a] border border-[#222222] p-4 text-sm text-gray-300">
+          <div className="rounded-2xl bg-white border border-[#c3d7ec] p-4 text-sm text-[#5a6b7d]">
             This view is for teacher review only.
           </div>
         )}
@@ -1033,17 +1033,17 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-[#111111] border border-[#222222] rounded-3xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white border border-[#c3d7ec] rounded-3xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Add New Drive</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl font-bold transition">&times;</button>
+          <h2 className="text-2xl font-bold text-[#071005]">Add New Drive</h2>
+          <button onClick={onClose} className="text-[#5a6b7d] hover:text-[#071005] text-2xl font-bold transition">&times;</button>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           {/* Company dropdown — only shown for non-HR users */}
           {!isHR && (
           <div>
             <select
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+              className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
               {...register('companyId', { required: 'Company is required' })}>
               <option value="">Select Company</option>
               {companies.map(c => (
@@ -1054,55 +1054,55 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
           </div>
           )}
           {isHR && hrCompanyName && (
-            <div className="bg-[#1a1a1a] border border-[#333333] rounded-xl px-4 py-3 flex items-center gap-2">
-              <span className="text-gray-400 text-sm">Company:</span>
-              <span className="text-white font-semibold">{hrCompanyName}</span>
+            <div className="bg-white border border-[#c3d7ec] rounded-xl px-4 py-3 flex items-center gap-2">
+              <span className="text-[#5a6b7d] text-sm">Company:</span>
+              <span className="text-[#071005] font-semibold">{hrCompanyName}</span>
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <input type="text" placeholder="Drive Title"
-                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
                 {...register('Title', { required: 'Title is required' })} />
               {errors.Title && <p className="text-red-400 text-xs mt-1">{errors.Title.message}</p>}
             </div>
             <div>
               <input type="text" placeholder="Job Role"
-                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
                 {...register('JobRole', { required: 'Job Role is required' })} />
               {errors.JobRole && <p className="text-red-400 text-xs mt-1">{errors.JobRole.message}</p>}
             </div>
             <div>
               <input type="text" placeholder="Package (e.g., 10 LPA)"
-                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
                 {...register('Package', { required: 'Package is required' })} />
               {errors.Package && <p className="text-red-400 text-xs mt-1">{errors.Package.message}</p>}
             </div>
             <div>
               <input type="date"
-                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
+                className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white transition"
                 {...register('LastDate', { required: 'Last Date is required' })} />
               {errors.LastDate && <p className="text-red-400 text-xs mt-1">{errors.LastDate.message}</p>}
             </div>
             <div>
               <input type="number" step="0.1" placeholder="Min CGPA"
-                className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 {...register('MinCGPA', { required: 'Min CGPA is required', min: 0, max: 10 })} />
               {errors.MinCGPA && <p className="text-red-400 text-xs mt-1">{errors.MinCGPA.message}</p>}
             </div>
           </div>
           {/* Multi-select branches */}
           <div>
-            <div className="rounded-2xl border border-[#333333] bg-[#0f0f0f] p-4">
+            <div className="rounded-2xl border border-[#c3d7ec] bg-white p-4">
               <div className="flex items-center justify-between gap-3 mb-4">
-                <p className="text-sm font-semibold text-white">Eligible Branches</p>
-                <span className="text-xs text-gray-400">Select any number of branches</span>
+                <p className="text-sm font-semibold text-[#071005]">Eligible Branches</p>
+                <span className="text-xs text-[#5a6b7d]">Select any number of branches</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {branchOptions.map((branch) => (
                   <label
                     key={branch}
-                    className="flex items-center gap-2 rounded-xl border border-[#333333] bg-[#151515] px-3 py-2 text-sm text-gray-200 transition hover:border-blue-700/40 hover:bg-blue-900/10"
+                    className="flex items-center gap-2 rounded-xl border border-[#c3d7ec] bg-white px-3 py-2 text-sm text-[#5a6b7d] transition hover:border-blue-700/40 hover:bg-blue-900/10"
                   >
                     <input
                       type="checkbox"
@@ -1119,7 +1119,7 @@ function AddDriveModal({ onClose, onAdded, driveToEdit, isHR, hrCompanyName, hrU
           </div>
           <div>
             <textarea placeholder="Description" rows="2"
-              className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white resize-none transition"
+              className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white resize-none transition"
               {...register('description')} />
           </div>
           <button type="submit" disabled={submitting}
@@ -1191,16 +1191,16 @@ function StudentAnalytics({ applications = [], drives = [] }) {
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
-      x: { ticks: { color: '#666', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-      y: { beginAtZero: true, ticks: { color: '#666', font: { size: 11 }, stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      x: { ticks: { color: '#5a6b7d', font: { size: 11 } }, grid: { color: 'rgba(7,16,5,0.07)' } },
+      y: { beginAtZero: true, ticks: { color: '#5a6b7d', font: { size: 11 }, stepSize: 1, precision: 0 }, grid: { color: 'rgba(7,16,5,0.07)' } },
     },
   };
 
   const statCards = [
-    { label: 'Total applied',  value: apps.length,        sub: 'all drives',       color: 'text-white' },
+    { label: 'Total applied',  value: apps.length,        sub: 'all drives',       color: 'text-[#071005]' },
     { label: 'Shortlisted',    value: counts.SHORTLISTED, sub: 'in review',        color: 'text-yellow-400' },
     { label: 'Selected',       value: counts.SELECTED,    sub: 'offers received',  color: 'text-green-400' },
-    { label: 'Success rate',   value: `${successRate}%`,  sub: 'selected / total', color: 'text-white' },
+    { label: 'Success rate',   value: `${successRate}%`,  sub: 'selected / total', color: 'text-[#071005]' },
   ];
 
   return (
@@ -1226,9 +1226,9 @@ function StudentAnalytics({ applications = [], drives = [] }) {
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+        <div className="bg-white border border-[#c3d7ec] rounded-2xl p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Status breakdown</p>
-          <div className="flex flex-wrap gap-3 mb-3 text-xs text-gray-400">
+          <div className="flex flex-wrap gap-3 mb-3 text-xs text-[#5a6b7d]">
             {Object.entries(STATUS_COLORS).map(([s, c]) => (
               <span key={s} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: c.bg }}></span>
@@ -1242,7 +1242,7 @@ function StudentAnalytics({ applications = [], drives = [] }) {
           </div>
         </div>
 
-        <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+        <div className="bg-white border border-[#c3d7ec] rounded-2xl p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Applications over time</p>
           <div className="relative h-56">
             {months.length > 0
@@ -1281,20 +1281,20 @@ function StudentAnalytics({ applications = [], drives = [] }) {
         const hasPieData = shortlisted > 0 || rejected > 0;
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+            <div className="bg-white border border-[#c3d7ec] rounded-2xl p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Hiring by Company</p>
               <div className="relative h-56">
-                <Bar data={hireChart} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />
+                <Bar data={hireChart} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#5a6b7d', stepSize: 1, precision: 0 }, grid: { color: 'rgba(7,16,5,0.07)' } }, x: { ticks: { color: '#5a6b7d' }, grid: { color: 'rgba(7,16,5,0.07)' } } } }} />
               </div>
             </div>
-            <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+            <div className="bg-white border border-[#c3d7ec] rounded-2xl p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Shortlisted vs Rejected</p>
               {hasPieData ? (
                 <div className="flex flex-col items-center">
                   <div className="relative h-40 w-full max-w-[200px]">
                     <Pie data={candidatePieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
                   </div>
-                  <div className="flex gap-5 mt-4 text-xs text-gray-400">
+                  <div className="flex gap-5 mt-4 text-xs text-[#5a6b7d]">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#EF9F27' }} />
                       Shortlisted <span className="text-yellow-400 font-bold ml-1">{shortlisted}</span>
@@ -1314,7 +1314,7 @@ function StudentAnalytics({ applications = [], drives = [] }) {
       })()}
 
       {/* Timeline */}
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5">
+      <div className="bg-white border border-[#c3d7ec] rounded-2xl p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Activity timeline</p>
         {sorted.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-8">No applications yet.</p>
@@ -1327,11 +1327,11 @@ function StudentAnalytics({ applications = [], drives = [] }) {
                 <div key={i} className="flex items-start gap-3">
                   <div className="flex flex-col items-center pt-1 shrink-0">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: sc.bg }}></div>
-                    {!isLast && <div className="w-px flex-1 bg-[#222222] mt-1" style={{ minHeight: '24px' }}></div>}
+                    {!isLast && <div className="w-px flex-1 bg-[#f5f9ff] mt-1" style={{ minHeight: '24px' }}></div>}
                   </div>
                   <div className="flex-1 min-w-0 pb-1">
                     <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                      <span className="text-sm font-bold text-white">{a.company}</span>
+                      <span className="text-sm font-bold text-[#071005]">{a.company}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold border uppercase ${sc.badge}`}>
                         {a.status}
                       </span>
@@ -1450,12 +1450,12 @@ function TeacherReports({ drives = [], allApplications = [] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+      <div className="bg-white border border-[#c3d7ec] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.3em] text-blue-400 font-semibold mb-3">Teacher dashboard</p>
             <h3 className="text-2xl sm:text-3xl font-bold mb-3">Generate Reports</h3>
-            <p className="text-gray-400 max-w-2xl">View branch-wise and company-wise placement summaries. Export any report as PDF or Excel.</p>
+            <p className="text-[#5a6b7d] max-w-2xl">View branch-wise and company-wise placement summaries. Export any report as PDF or Excel.</p>
           </div>
           <div className="flex gap-3 flex-wrap">
             <button onClick={handleExportPDF}
@@ -1473,8 +1473,8 @@ function TeacherReports({ drives = [], allApplications = [] }) {
       <div className="grid grid-cols-2 gap-3">
         {reportOptions.map(report => (
           <button key={report.key} onClick={() => setActiveReport(report.key)}
-            className={`rounded-3xl border p-5 text-left transition ${activeReport === report.key ? 'border-white bg-white text-black' : 'border-[#222222] bg-[#111111] text-gray-300 hover:border-[#444444]'}`}>
-            <p className="text-xs uppercase tracking-[0.2em] text-gray-400 mb-3">{report.title}</p>
+            className={`rounded-3xl border p-5 text-left transition ${activeReport === report.key ? 'border-white bg-white text-black' : 'border-[#c3d7ec] bg-white text-[#5a6b7d] hover:border-[#c3d7ec]'}`}>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#5a6b7d] mb-3">{report.title}</p>
             <p className="text-2xl font-bold">{reportRows.length > 0 ? reportRows.reduce((sum, row) => sum + Number(Object.values(row)[1] || 0), 0) : 0}</p>
             <p className="text-gray-500 text-sm mt-1">Total placements</p>
           </button>
@@ -1482,31 +1482,31 @@ function TeacherReports({ drives = [], allApplications = [] }) {
       </div>
 
       {(activeReport === 'branch' || activeReport === 'company') && reportRows.length > 0 ? (
-        <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-          <h4 className="text-lg font-bold text-white mb-4">{selectedReport.title}</h4>
+        <div className="bg-white border border-[#c3d7ec] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+          <h4 className="text-lg font-bold text-[#071005] mb-4">{selectedReport.title}</h4>
           <div className="relative h-80">
             {activeReport === 'branch'  && <Pie data={branchChartData}  options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ddd' } } } }} />}
             {activeReport === 'company' && <Pie data={companyChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ddd' } } } }} />}
           </div>
         </div>
       ) : (
-        <div className="bg-[#111111] border border-[#222222] rounded-3xl overflow-hidden transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
-          <div className="px-6 py-5 border-b border-[#222222]">
-            <h4 className="text-lg font-bold text-white">{selectedReport.title}</h4>
+        <div className="bg-white border border-[#c3d7ec] rounded-3xl overflow-hidden transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+          <div className="px-6 py-5 border-b border-[#c3d7ec]">
+            <h4 className="text-lg font-bold text-[#071005]">{selectedReport.title}</h4>
           </div>
           <div className="overflow-x-auto p-4">
             <table className="min-w-full text-left text-sm">
               <thead>
-                <tr className="text-gray-400 text-xs uppercase tracking-[0.2em] border-b border-[#222222]">
+                <tr className="text-[#5a6b7d] text-xs uppercase tracking-[0.2em] border-b border-[#c3d7ec]">
                   <th className="py-3 px-4">{selectedReport.label}</th>
                   <th className="py-3 px-4">{selectedReport.valueLabel}</th>
                 </tr>
               </thead>
               <tbody>
                 {reportRows.length > 0 ? reportRows.map((row, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-[#0e0e0e]' : ''}>
-                    <td className="py-3 px-4 text-sm text-gray-200">{Object.values(row)[0]}</td>
-                    <td className="py-3 px-4 text-sm text-white">{Object.values(row)[1]}</td>
+                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : ''}>
+                    <td className="py-3 px-4 text-sm text-[#5a6b7d]">{Object.values(row)[0]}</td>
+                    <td className="py-3 px-4 text-sm text-[#071005]">{Object.values(row)[1]}</td>
                   </tr>
                 )) : (
                   <tr>
@@ -1546,20 +1546,20 @@ function TeacherReports({ drives = [], allApplications = [] }) {
         const hasPieData = shortlisted > 0 || rejected > 0;
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6">
-              <h4 className="text-lg font-bold text-white mb-4">Hiring by Company</h4>
+            <div className="bg-white border border-[#c3d7ec] rounded-3xl p-6">
+              <h4 className="text-lg font-bold text-[#071005] mb-4">Hiring by Company</h4>
               <div className="relative h-64">
-                <Bar data={hireChart} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#666', stepSize: 1, precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { ticks: { color: '#666' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }} />
+                <Bar data={hireChart} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#5a6b7d', stepSize: 1, precision: 0 }, grid: { color: 'rgba(7,16,5,0.07)' } }, x: { ticks: { color: '#5a6b7d' }, grid: { color: 'rgba(7,16,5,0.07)' } } } }} />
               </div>
             </div>
-            <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6">
-              <h4 className="text-lg font-bold text-white mb-4">Shortlisted vs Rejected</h4>
+            <div className="bg-white border border-[#c3d7ec] rounded-3xl p-6">
+              <h4 className="text-lg font-bold text-[#071005] mb-4">Shortlisted vs Rejected</h4>
               {hasPieData ? (
                 <div className="flex flex-col items-center">
                   <div className="relative h-48 w-full max-w-[220px]">
                     <Pie data={candidatePieData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
                   </div>
-                  <div className="flex gap-6 mt-4 text-xs text-gray-400">
+                  <div className="flex gap-6 mt-4 text-xs text-[#5a6b7d]">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: '#EF9F27' }} />
                       Shortlisted <span className="text-yellow-400 font-bold ml-1">{shortlisted}</span>
@@ -1584,31 +1584,31 @@ function TeacherReports({ drives = [], allApplications = [] }) {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-2xl border border-[#222222] bg-[#111111] p-5 sm:p-6">
+    <div className="animate-pulse rounded-2xl border border-[#c3d7ec] bg-white p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="h-12 w-12 rounded-xl bg-[#1a1a1a]" />
+        <div className="h-12 w-12 rounded-xl bg-white" />
         <div className="flex flex-col items-end gap-2">
-          <div className="h-5 w-24 rounded-full bg-[#1a1a1a]" />
-          <div className="h-4 w-16 rounded-full bg-[#1a1a1a]" />
+          <div className="h-5 w-24 rounded-full bg-white" />
+          <div className="h-4 w-16 rounded-full bg-white" />
         </div>
       </div>
-      <div className="h-5 w-3/4 rounded bg-[#1a1a1a] mb-3" />
-      <div className="h-4 w-1/2 rounded bg-[#1a1a1a] mb-6" />
-      <div className="h-10 w-full rounded-xl bg-[#1a1a1a]" />
+      <div className="h-5 w-3/4 rounded bg-white mb-3" />
+      <div className="h-4 w-1/2 rounded bg-white mb-6" />
+      <div className="h-10 w-full rounded-xl bg-white" />
     </div>
   );
 }
 
 function SkeletonRow() {
   return (
-    <div className="animate-pulse flex items-center gap-4 rounded-xl border border-[#333333] bg-[#1a1a1a] p-4">
-      <div className="h-5 w-5 rounded bg-[#222222]" />
-      <div className="h-10 w-10 rounded-full bg-[#222222]" />
+    <div className="animate-pulse flex items-center gap-4 rounded-xl border border-[#c3d7ec] bg-white p-4">
+      <div className="h-5 w-5 rounded bg-[#f5f9ff]" />
+      <div className="h-10 w-10 rounded-full bg-[#f5f9ff]" />
       <div className="flex-1 min-w-0">
-        <div className="h-4 w-1/3 rounded bg-[#222222] mb-2" />
-        <div className="h-3 w-1/2 rounded bg-[#222222]" />
+        <div className="h-4 w-1/3 rounded bg-[#f5f9ff] mb-2" />
+        <div className="h-3 w-1/2 rounded bg-[#f5f9ff]" />
       </div>
-      <div className="h-7 w-24 rounded-full bg-[#222222]" />
+      <div className="h-7 w-24 rounded-full bg-[#f5f9ff]" />
     </div>
   );
 }
@@ -1674,17 +1674,17 @@ function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+      <div className="bg-white border border-[#c3d7ec] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
         <h3 className="text-2xl font-bold mb-6">HR Analytics Dashboard</h3>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
           {[
-            { label: 'Companies', value: companies.length, color: 'text-white', glow: 'rgba(255,255,255,0.04)' },
-            { label: 'Drives', value: drives.length, color: 'text-white', glow: 'rgba(59,130,246,0.06)' },
+            { label: 'Companies', value: companies.length, color: 'text-[#071005]', glow: 'rgba(7,16,5,0.04)' },
+            { label: 'Drives', value: drives.length, color: 'text-[#071005]', glow: 'rgba(59,130,246,0.06)' },
             { label: 'Shortlisted', value: stats.shortlisted, color: 'text-yellow-400', glow: 'rgba(234,179,8,0.06)' },
             { label: 'Selected', value: stats.selected, color: 'text-green-400', glow: 'rgba(34,197,94,0.06)' },
             { label: 'Rejected', value: stats.rejected, color: 'text-red-400', glow: 'rgba(239,68,68,0.06)' },
-            { label: 'Active Cos', value: companies.filter(c => c.isActive).length, color: 'text-white', glow: 'rgba(168,85,247,0.06)' },
+            { label: 'Active Cos', value: companies.filter(c => c.isActive).length, color: 'text-[#071005]', glow: 'rgba(168,85,247,0.06)' },
           ].map((card, i) => (
             <div
               key={card.label}
@@ -1699,7 +1699,7 @@ function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
         </div>
 
         <div className="flex justify-center mt-6">
-          <div className="bg-[#0f0f0f] rounded-3xl p-6 border border-[#222222] w-full max-w-md">
+          <div className="bg-white rounded-3xl p-6 border border-[#c3d7ec] w-full max-w-md">
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-4 text-center">Application Status Breakdown</p>
             {hrApplications.length > 0 ? (
               <div className="flex flex-col items-center gap-4">
@@ -1714,16 +1714,16 @@ function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
         </div>
       </div>
 
-      <div className="bg-[#111111] border border-[#222222] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+      <div className="bg-white border border-[#c3d7ec] rounded-3xl p-6 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
         <h3 className="text-2xl font-bold mb-4">Company List</h3>
         <div className="grid gap-4">
           {companies.length === 0 ? (
-            <p className="text-gray-400">No companies found. Add a company to manage hiring reports.</p>
+            <p className="text-[#5a6b7d]">No companies found. Add a company to manage hiring reports.</p>
           ) : companies.map(company => (
-            <div key={company.CompanyId || company._id} className="bg-[#0f0f0f] rounded-3xl p-5 border border-[#222222] flex flex-col lg:flex-row lg:items-center justify-between gap-4 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
+            <div key={company.CompanyId || company._id} className="bg-white rounded-3xl p-5 border border-[#c3d7ec] flex flex-col lg:flex-row lg:items-center justify-between gap-4 transform-gpu transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
               <div>
-                <h4 className="text-lg font-semibold text-white">{company.CompanyName}</h4>
-                <p className="text-gray-400 text-sm">ID: {company.CompanyId || 'N/A'} · HR Email: {company.Email || 'N/A'}</p>
+                <h4 className="text-lg font-semibold text-[#071005]">{company.CompanyName}</h4>
+                <p className="text-[#5a6b7d] text-sm">ID: {company.CompanyId || 'N/A'} · HR Email: {company.Email || 'N/A'}</p>
                 <p className="text-gray-500 text-sm mt-2">{company.Descrption || 'No description provided.'}</p>
               </div>
               <div className="flex flex-wrap gap-3 items-center">
@@ -1972,40 +1972,40 @@ function Mainpage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white px-4 py-5 sm:p-6 lg:p-10 font-sans flex flex-col gap-5 sm:gap-8">
+    <div className="min-h-screen bg-background text-[#071005] px-4 py-5 sm:p-6 lg:p-10 font-sans flex flex-col gap-5 sm:gap-8">
       <ScrollRestoration />
       {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
       {/* ── Profile Card ── */}
-      <div className="w-full bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col md:flex-row md:items-center gap-5 md:gap-8 justify-between relative shadow-lg transition-all duration-300">
+      <div className="w-full bg-white border border-[#c3d7ec] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col md:flex-row md:items-center gap-5 md:gap-8 justify-between relative shadow-lg transition-all duration-300">
         <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-5 min-w-0">
           <div className="relative shrink-0">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-[#333333] shadow-lg bg-[#1a1a1a]">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-[#c3d7ec] shadow-lg bg-white">
               <img src={profileImageUrl} alt="Profile" className="w-full h-full object-cover"
                 onError={e => { e.target.src = defaultAvatar; }} />
             </div>
-            <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-[#111111] shadow"></span>
+            <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-[#c3d7ec] shadow"></span>
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 break-words">{user?.name || 'Guest User'}</h2>
-            <p className="text-gray-400 text-sm sm:text-base mb-3 break-all">{user?.email || 'No Email Provided'}</p>
+            <p className="text-[#5a6b7d] text-sm sm:text-base mb-3 break-all">{user?.email || 'No Email Provided'}</p>
             <div className="flex flex-wrap gap-2 justify-center sm:justify-start mb-3">
-              <span className="bg-[#1a1a1a] px-4 py-1.5 rounded-full border border-[#333333] text-sm text-gray-300 flex items-center gap-2">
+              <span className="bg-white px-4 py-1.5 rounded-full border border-[#c3d7ec] text-sm text-[#5a6b7d] flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
                 {user?.role || 'Student'}
               </span>
               {profileDetails?.designation && (
-                <span className="bg-[#1a1a1a] px-4 py-1.5 rounded-full border border-[#333333] text-sm text-gray-300">
+                <span className="bg-white px-4 py-1.5 rounded-full border border-[#c3d7ec] text-sm text-[#5a6b7d]">
                   {profileDetails.designation}
                 </span>
               )}
               {profileDetails?.cgpa && !isTeacher && !isHR && (
-                <span className="bg-[#1a1a1a] px-4 py-1.5 rounded-full border border-[#333333] text-sm text-gray-300">
+                <span className="bg-white px-4 py-1.5 rounded-full border border-[#c3d7ec] text-sm text-[#5a6b7d]">
                   CGPA: {profileDetails.cgpa}
                 </span>
               )}
               {(profileDetails?.department || profileDetails?.branch) && (
-                <span className="bg-[#1a1a1a] px-4 py-1.5 rounded-full border border-[#333333] text-sm text-gray-300">
+                <span className="bg-white px-4 py-1.5 rounded-full border border-[#c3d7ec] text-sm text-[#5a6b7d]">
                   {profileDetails.department || profileDetails.branch}
                 </span>
               )}
@@ -2023,13 +2023,13 @@ function Mainpage() {
             {isTeacher && (
               <div className="flex flex-wrap gap-4 mt-1 text-sm">
                 {profileDetails?.phone && (
-                  <div className="flex items-center gap-1.5 text-gray-400">
+                  <div className="flex items-center gap-1.5 text-[#5a6b7d]">
                     <span className="text-gray-600">📞</span>
                     <span>{profileDetails.phone}</span>
                   </div>
                 )}
                 {profileDetails?.department && (
-                  <div className="flex items-center gap-1.5 text-gray-400">
+                  <div className="flex items-center gap-1.5 text-[#5a6b7d]">
                     <span className="text-gray-600">🏛️</span>
                     <span>{profileDetails.department} Dept.</span>
                   </div>
@@ -2051,10 +2051,10 @@ function Mainpage() {
 
         {/* Sidebar */}
         <div className="w-full lg:w-64 flex lg:flex-col gap-3 shrink-0 overflow-x-auto pb-1 lg:pb-0">
-          <h3 className="hidden lg:block text-gray-400 text-sm font-bold uppercase tracking-wider mb-2 px-2">Menu</h3>
+          <h3 className="hidden lg:block text-[#5a6b7d] text-sm font-bold uppercase tracking-wider mb-2 px-2">Menu</h3>
 
           <button onClick={() => navigate('/dashboard')}
-            className="px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25">
+            className="px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap bg-white border-[#c3d7ec] hover:bg-white hover:border-red-500/25">
             New Dashboard
           </button>
 
@@ -2062,7 +2062,7 @@ function Mainpage() {
             className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
               activeView === 'drives'
                 ? 'bg-white text-black border-white'
-                : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
+                : 'bg-white border-[#c3d7ec] hover:bg-white hover:border-red-500/25'
             }`}>
             {isHR ? 'Manage Drives' : 'Available Drives'}
           </button>
@@ -2072,7 +2072,7 @@ function Mainpage() {
               className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                 activeView === 'applied'
                   ? 'bg-white text-black border-white'
-                  : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
+                  : 'bg-white border-[#c3d7ec] hover:bg-white hover:border-red-500/25'
               }`}>
               Applied Roles
             </button>
@@ -2085,7 +2085,7 @@ function Mainpage() {
                       className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                         activeView === 'analytics'
                           ? 'bg-white text-black border-white'
-                          : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
+                          : 'bg-white border-[#c3d7ec] hover:bg-white hover:border-red-500/25'
                       }`}>
                       Analytics
                     </button>
@@ -2096,7 +2096,7 @@ function Mainpage() {
                       className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                         activeView === 'analytics'
                           ? 'bg-white text-black border-white'
-                          : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
+                          : 'bg-white border-[#c3d7ec] hover:bg-white hover:border-red-500/25'
                       }`}>
                       {isTeacher ? 'Generate Reports' : 'My Analytics'}
                     </button>
@@ -2106,7 +2106,7 @@ function Mainpage() {
                     className={`px-5 py-3 sm:px-6 sm:py-4 rounded-2xl transition-all duration-200 font-semibold text-left border whitespace-nowrap ${
                       activeView === 'settings'
                         ? 'bg-white text-black border-white'
-                        : 'bg-[#111111] border-[#222222] hover:bg-[#1a1a1a] hover:border-red-500/25'
+                        : 'bg-white border-[#c3d7ec] hover:bg-white hover:border-red-500/25'
                     }`}>
                     Settings
                   </button>
@@ -2128,18 +2128,18 @@ function Mainpage() {
                     <>
                         <input type="text" placeholder="Search Title or Role..." value={searchQuery}
                           onChange={e => setSearchQuery(e.target.value)}
-                          className="bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm w-full sm:w-auto transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]" />
+                          className="bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm w-full sm:w-auto transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]" />
                       {!isTeacher && (
                         <input type="number" step="0.1" placeholder="Max CGPA" value={cgpaFilter}
                           onChange={e => setCgpaFilter(e.target.value)}
-                          className="bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm w-full sm:w-32 transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                          className="bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm w-full sm:w-32 transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                       )}
                     </>
                   )}
                   <select
                     value={driveSortOrder}
                     onChange={e => setDriveSortOrder(e.target.value)}
-                    className="bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]"
+                    className="bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-2 focus:outline-none focus:border-red-400 text-sm transition hover:shadow-[0_0_18px_rgba(239,68,68,0.12)]"
                   >
                     <option value="newest">New to old</option>
                     <option value="oldest">Old to new</option>
@@ -2180,9 +2180,9 @@ function Mainpage() {
                 {drivesLoading ? (
                   Array.from({ length: 6 }).map((_, idx) => <SkeletonCard key={idx} />)
                 ) : filteredDrives.length === 0 ? (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-center rounded-3xl border border-dashed border-[#2b2b2b] bg-[#0f0f0f]">
-                    <div className="w-20 h-20 bg-[#1a1a1a] border border-[#222222] rounded-full flex items-center justify-center mb-4 text-4xl">🔍</div>
-                    <h4 className="text-white font-bold text-lg mb-2">No drives found</h4>
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 text-center rounded-3xl border border-dashed border-[#c3d7ec] bg-white">
+                    <div className="w-20 h-20 bg-white border border-[#c3d7ec] rounded-full flex items-center justify-center mb-4 text-4xl">🔍</div>
+                    <h4 className="text-[#071005] font-bold text-lg mb-2">No drives found</h4>
                     <p className="text-gray-500 text-sm max-w-sm">Try adjusting your search or filter criteria, or wait for new drives to be posted.</p>
                   </div>
                 ) : filteredDrives.map(drive => {
@@ -2207,23 +2207,23 @@ function Mainpage() {
                     <div key={drive._id} onClick={() => {
                         if (!isHR) setSelectedDriveToView({ ...drive, id: drive._id, company: companyName, role: drive.JobRole, salary: drive.Package });
                       }}
-                      className={`cursor-pointer bg-[#111111] border rounded-2xl p-5 sm:p-6 hover:border-red-500/25 flex flex-col justify-between min-w-0 shadow-lg group ${isInactive ? 'border-gray-700 opacity-70' : isExpired ? 'border-red-900/40 opacity-70' : isClosingSoon ? 'border-orange-500/30' : 'border-[#222222]'}`}>
+                      className={`cursor-pointer bg-white border rounded-2xl p-5 sm:p-6 hover:border-red-500/25 flex flex-col justify-between min-w-0 shadow-lg group ${isInactive ? 'border-gray-700 opacity-70' : isExpired ? 'border-red-900/40 opacity-70' : isClosingSoon ? 'border-orange-500/30' : 'border-[#c3d7ec]'}`}>
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md group-hover:scale-105 transition-transform">
                             {companyName[0]}
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className="text-xs bg-[#1a1a1a] border border-[#333333] px-3 py-1 rounded-lg text-gray-300 font-medium">
+                            <span className="text-xs bg-white border border-[#c3d7ec] px-3 py-1 rounded-lg text-[#5a6b7d] font-medium">
                               Min CGPA: {drive.MinCGPA}
                             </span>
-                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : isClosingSoon ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-[#1a1a1a] text-gray-500'}`}>
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : isClosingSoon ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-white text-gray-500'}`}>
                               {deadlineLabel}
                             </span>
                           </div>
                         </div>
-                        <h4 className="text-xl font-bold mb-1 truncate text-white">{companyName}</h4>
-                        <p className="text-gray-400 text-sm mb-3 font-medium">{drive.Title} · {drive.JobRole}</p>
+                        <h4 className="text-xl font-bold mb-1 truncate text-[#071005]">{companyName}</h4>
+                        <p className="text-[#5a6b7d] text-sm mb-3 font-medium">{drive.Title} · {drive.JobRole}</p>
                         {branches.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mb-3">
                             {branches.slice(0, 3).map((b, i) => (
@@ -2234,9 +2234,9 @@ function Mainpage() {
                         )}
                       </div>
 
-                      <div className="border-t border-[#222222] pt-4 mt-2">
+                      <div className="border-t border-[#c3d7ec] pt-4 mt-2">
                         <div className="flex flex-wrap justify-between items-center gap-2 mb-4 text-sm">
-                          <span className="text-gray-200 font-bold bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-[#333333]">{drive.Package}</span>
+                          <span className="text-[#5a6b7d] font-bold bg-white px-3 py-1.5 rounded-lg border border-[#c3d7ec]">{drive.Package}</span>
                           <span className="text-gray-500 text-xs font-medium">
                             {new Date(drive.LastDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
@@ -2245,7 +2245,7 @@ function Mainpage() {
                         {isHR ? (
                           <div className="grid gap-3">
                             <button onClick={() => setSelectedDriveToView({ ...drive, id: drive._id, company: companyName, role: drive.JobRole })}
-                              className="w-full bg-[#1a1a1a] border border-[#333333] text-white font-semibold py-3 rounded-xl hover:bg-white hover:text-black transition shadow-sm">
+                              className="w-full bg-white border border-[#c3d7ec] text-[#071005] font-semibold py-3 rounded-xl hover:bg-white hover:text-black transition shadow-sm">
                               View Candidates
                             </button>
                             <div className="flex gap-3">
@@ -2266,7 +2266,7 @@ function Mainpage() {
                                 ✓ Applied
                               </button>
                             ) : (isInactive || isExpired) ? (
-                              <button disabled className="w-full bg-[#1a1a1a] text-gray-500 border border-[#222222] font-semibold py-3 rounded-xl cursor-not-allowed">
+                              <button disabled className="w-full bg-white text-gray-500 border border-[#c3d7ec] font-semibold py-3 rounded-xl cursor-not-allowed">
                                 Drive Closed/Expired
                               </button>
                             ) : (() => {
@@ -2304,22 +2304,22 @@ function Mainpage() {
                     {Array.from({ length: 4 }).map((_, idx) => <SkeletonRow key={idx} />)}
                   </div>
                 ) : roles.length === 0 ? (
-                  <div className="bg-[#111111] border border-dashed border-[#222222] rounded-2xl p-8 sm:p-10 text-center text-gray-400">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1a1a1a] border border-[#333333] flex items-center justify-center text-2xl">◎</div>
-                    <p className="text-white font-semibold mb-2">No applications yet</p>
-                    <p className="text-gray-400 text-sm">Browse the drives tab and apply to roles that match your profile.</p>
+                  <div className="bg-white border border-dashed border-[#c3d7ec] rounded-2xl p-8 sm:p-10 text-center text-[#5a6b7d]">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white border border-[#c3d7ec] flex items-center justify-center text-2xl">◎</div>
+                    <p className="text-[#071005] font-semibold mb-2">No applications yet</p>
+                    <p className="text-[#5a6b7d] text-sm">Browse the drives tab and apply to roles that match your profile.</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {roles.map((role, idx) => (
-                      <div key={idx} className="bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 min-w-0">
+                      <div key={idx} className="bg-white border border-[#c3d7ec] rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 min-w-0">
                         <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-12 h-12 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-xl font-bold border border-[#333333]">
+                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl font-bold border border-[#c3d7ec]">
                             {role.company?.[0] || '?'}
                           </div>
                           <div className="min-w-0">
                             <h4 className="text-xl font-bold truncate">{role.company}</h4>
-                            <p className="text-gray-400 text-sm">{role.role} · {role.salary}</p>
+                            <p className="text-[#5a6b7d] text-sm">{role.role} · {role.salary}</p>
                           </div>
                         </div>
                         <div className="text-left sm:text-right">
@@ -2353,34 +2353,34 @@ function Mainpage() {
           {activeView === 'settings' && (
             <>
               <h3 className="text-xl sm:text-2xl font-bold mb-5 sm:mb-6">Profile Settings</h3>
-              <div className="bg-[#111111] border border-[#222222] rounded-2xl p-5 sm:p-8 max-w-4xl">
+              <div className="bg-white border border-[#c3d7ec] rounded-2xl p-5 sm:p-8 max-w-4xl">
                 <form onSubmit={handleSettingsSubmit(onUpdateSettings)} className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Full Name</label>
+                    <label className="block text-[#5a6b7d] text-sm mb-2">Full Name</label>
                     <input type="text"
-                      className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                      className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                       {...registerSettings('name', { required: true })} />
                   </div>
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Email</label>
+                    <label className="block text-[#5a6b7d] text-sm mb-2">Email</label>
                     <input type="email"
-                      className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                      className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                       {...registerSettings('email', { required: true })} />
                   </div>
                   {isHR && (
                     <div>
-                      <label className="block text-gray-400 text-sm mb-2">Company Name</label>
+                      <label className="block text-[#5a6b7d] text-sm mb-2">Company Name</label>
                       <input type="text"
-                        className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                        className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                         {...registerSettings('companyName', { required: true })} />
                     </div>
                   )}
                   {isTeacher && (
                     <>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-2">Designation</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">Designation</label>
                         <select
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                           {...registerSettings('designation', { required: true })}
                         >
                           <option value="">Select Designation</option>
@@ -2392,9 +2392,9 @@ function Mainpage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-2">Department</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">Department</label>
                         <select
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                           {...registerSettings('department', { required: true })}
                         >
                           <option value="">Select Department</option>
@@ -2411,47 +2411,47 @@ function Mainpage() {
                     </>
                   )}
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Profile Image</label>
+                    <label className="block text-[#5a6b7d] text-sm mb-2">Profile Image</label>
                     <input type="file" accept="image/png,image/jpeg,image/webp"
-                      className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
+                      className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200 cursor-pointer"
                       {...registerSettings('profileImage')} />
                   </div>
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Phone Number</label>
+                    <label className="block text-[#5a6b7d] text-sm mb-2">Phone Number</label>
                     <input type="text"
-                      className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                      className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                       {...registerSettings('phone')} />
                   </div>
                   {!isHR && !isTeacher && (
                     <>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-2">CGPA</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">CGPA</label>
                         <input type="text"
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                           {...registerSettings('cgpa')} />
                       </div>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-2">Branch</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">Branch</label>
                         <input type="text"
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                           {...registerSettings('branch')} />
                       </div>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-2">GitHub Profile URL</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">GitHub Profile URL</label>
                         <input type="text"
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                           {...registerSettings('github')} />
                       </div>
                       <div>
-                        <label className="block text-gray-400 text-sm mb-2">LinkedIn Profile URL</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">LinkedIn Profile URL</label>
                         <input type="text"
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white"
                           {...registerSettings('linkedin')} />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-gray-400 text-sm mb-2">Skills</label>
+                        <label className="block text-[#5a6b7d] text-sm mb-2">Skills</label>
                         <textarea rows="3"
-                          className="w-full bg-[#1a1a1a] border border-[#333333] text-white rounded-xl px-4 py-3 focus:outline-none focus:border-white resize-none"
+                          className="w-full bg-white border border-[#c3d7ec] text-[#071005] rounded-xl px-4 py-3 focus:outline-none focus:border-white resize-none"
                           {...registerSettings('skills')} />
                       </div>
                     </>
