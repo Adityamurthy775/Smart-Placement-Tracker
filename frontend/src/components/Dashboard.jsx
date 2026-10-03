@@ -1377,19 +1377,20 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen p-4 sm:p-8" style={{ backgroundColor: PAGE_BG }}>
-      <div className="mx-auto max-w-[1400px] rounded-[32px] p-5 sm:p-7" style={{ backgroundColor: PANEL_BG }}>
-        {/* top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <Link to="/dashboard" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#12a25a] text-white">
+      <div className="mx-auto max-w-[1600px] rounded-[32px] p-5 sm:p-7" style={{ backgroundColor: PANEL_BG }}>
+        {/* top bar — one row, never wraps. The nav takes the slack and scrolls
+            horizontally on narrow screens; brand and right cluster stay put. */}
+        <div className="flex items-center gap-2">
+          <Link to="/dashboard" className="flex shrink-0 self-start items-center gap-2 pt-0.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#12a25a] text-white">
               <Send size={16} />
             </span>
-            <span className="font-heading text-2xl font-bold tracking-tight text-[#0a7d45]">
-            Smart Placement Tracker
-          </span>
+            <span className="font-heading text-xl font-bold tracking-tight text-[#0a7d45]">
+              Smart Placement Tracker
+            </span>
           </Link>
 
-          <nav className="flex flex-wrap gap-1.5 rounded-2xl border border-[#eceff2] bg-white p-1.5">
+          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-2xl border border-[#eceff2] bg-white p-1.5">
             {navItems.map(({ key, label, Icon }) => (
               <button
                 key={key}
@@ -1397,7 +1398,7 @@ export default function Dashboard() {
                 onClick={() => setTab(key)}
                 aria-current={tab === key}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-2xl px-5 py-3 text-lg font-bold transition',
+                  'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl px-3.5 py-2.5 text-base font-bold transition',
                   tab === key
                     ? 'bg-[#12a25a] text-white shadow-[0_2px_8px_rgba(18,162,90,0.25)]'
                     : 'text-[#5a6b7d] hover:bg-[#f3f5f7] hover:text-[#0f172a]',
@@ -1409,14 +1410,14 @@ export default function Dashboard() {
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <label className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#eceff2] bg-white px-4">
               <Search size={16} className="shrink-0 text-[#8a97a5]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search applications"
-                className="w-40 border-0 bg-transparent py-0 text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
+                className="w-32 border-0 bg-transparent py-0 text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
               />
             </label>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-base font-bold text-white">
