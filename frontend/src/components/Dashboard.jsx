@@ -929,10 +929,10 @@ function ApplicationsView({ applications, query, onClearQuery }) {
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center">
-          <p className="text-base font-semibold text-[#0f172a]">
+          <p className="text-lg font-semibold text-[#0f172a]">
             {applications.length === 0 ? 'No applications yet' : 'No match for that search'}
           </p>
-          <button type="button" onClick={onClearQuery} className="text-sm font-bold text-[#0a7d45] underline">
+          <button type="button" onClick={onClearQuery} className="text-base font-bold text-[#0a7d45] underline">
             {applications.length === 0 ? 'Apply from the Drives tab' : 'Clear search'}
           </button>
         </div>
@@ -940,7 +940,7 @@ function ApplicationsView({ applications, query, onClearQuery }) {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[620px] text-left">
             <thead>
-              <tr className="text-sm font-semibold text-[#8a97a5]">
+              <tr className="text-base font-semibold text-[#8a97a5]">
                 <th className="pb-3 font-semibold">Company</th>
                 <th className="pb-3 font-semibold">Role</th>
                 <th className="pb-3 font-semibold">Applied</th>
@@ -953,20 +953,20 @@ function ApplicationsView({ applications, query, onClearQuery }) {
                 <tr key={row._id} className="border-t border-[#f2f4f6]">
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-sm font-bold text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-base font-bold text-white">
                         {initials(row.company)}
                       </span>
-                      <span className="text-sm font-bold text-[#0f172a]">{row.company || '—'}</span>
+                      <span className="text-base font-bold text-[#0f172a]">{row.company || '—'}</span>
                     </div>
                   </td>
-                  <td className="py-3 text-sm text-[#5a6b7d]">{row.role || '—'}</td>
-                  <td className="py-3 text-sm text-[#5a6b7d]">{row.appliedDate || '—'}</td>
+                  <td className="py-3 text-base text-[#5a6b7d]">{row.role || '—'}</td>
+                  <td className="py-3 text-base text-[#5a6b7d]">{row.appliedDate || '—'}</td>
                   <td className="py-3">
-                    <span className={cn('rounded-full px-2.5 py-1 text-sm font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
+                    <span className={cn('rounded-full px-2.5 py-1 text-base font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
                       {row.status || 'APPLIED'}
                     </span>
                   </td>
-                  <td className="py-3 text-right text-sm font-semibold text-[#0f172a]">
+                  <td className="py-3 text-right text-base font-semibold text-[#0f172a]">
                     {row.salary ? formatMoney(String(row.salary).replace(/[^\d.]/g, '')) + ' LPA' : '—'}
                   </td>
                 </tr>
@@ -1015,7 +1015,7 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
         >
           {PROFILE_FIELDS.map((field) => (
             <label key={field.name} className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold uppercase tracking-wide text-[#8a97a5]">
+              <span className="text-base font-semibold uppercase tracking-wide text-[#8a97a5]">
                 {field.label}
               </span>
               <input
@@ -1023,7 +1023,7 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
                 {...(field.numeric ? { min: 0, max: 10, step: '0.01' } : {})}
                 value={form[field.name]}
                 onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
-                className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+                className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-lg text-[#0f172a] outline-none focus:border-[#12a25a]"
               />
             </label>
           ))}
@@ -1031,14 +1031,14 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-[#0a7d45] px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-60"
+              className="rounded-full bg-[#0a7d45] px-6 py-2.5 text-base font-bold text-white transition disabled:opacity-60"
             >
               {saving ? 'Saving…' : 'Save profile'}
             </button>
           </div>
         </form>
         {message && (
-          <p className="mt-4 rounded-2xl bg-[#e7f7ee] px-4 py-3 text-sm font-semibold text-[#0a7d45]">
+          <p className="mt-4 rounded-2xl bg-[#e7f7ee] px-4 py-3 text-base font-semibold text-[#0a7d45]">
             {message}
           </p>
         )}
@@ -1046,7 +1046,7 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
 
       <div className={cn(CARD, 'p-5')}>
         <CardHead title="Account" sub="Read-only session details" />
-        <dl className="mt-4 flex flex-col gap-3 text-sm">
+        <dl className="mt-4 flex flex-col gap-3 text-base">
           {[
             ['Email', user?.email],
             ['Role', user?.role],

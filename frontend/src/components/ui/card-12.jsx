@@ -107,8 +107,9 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
       className={cn(
         // Card ground is the dashboard's pale-blue wash (same hex as the
         // overview's "eligible" chips) so drives read as a set, not as white
-        // boxes. Button green and the ink text both clear AA on it.
-        "flex w-full max-w-lg flex-col rounded-3xl border border-[#d7e3f7] bg-[#e8effd] p-6 font-sans shadow-sm transition hover:border-[#b9cfef]",
+        // boxes. Padding is deliberately tight: the type is large, so the card
+        // does not also need to be big.
+        "flex w-full max-w-lg flex-col rounded-3xl border border-[#d7e3f7] bg-[#e8effd] p-5 font-sans shadow-sm transition hover:border-[#b9cfef]",
         className,
       )}
     >
@@ -117,19 +118,19 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
         <div className="flex items-center gap-3">
           <Avatar name={postedBy.name} avatarUrl={postedBy.avatarUrl} />
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-bold text-[#0f172a]">{postedBy.name}</h2>
-            <p className="truncate text-base font-semibold text-[#0a7d45]">{role}</p>
+            <h2 className="truncate text-3xl font-bold text-[#0f172a]">{postedBy.name}</h2>
+            <p className="truncate text-lg font-semibold text-[#0a7d45]">{role}</p>
           </div>
         </div>
         <Badge variant="success">{status}</Badge>
       </div>
 
       {/* package + the one number that decides whether to apply */}
-      <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-        <p className="text-5xl font-bold tracking-tight text-[#0f172a]">{packageLabel}</p>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <p className="text-4xl font-bold tracking-tight text-[#0f172a]">{packageLabel}</p>
         <span
           className={cn(
-            "flex items-center gap-1.5 text-base font-bold",
+            "flex items-center gap-1.5 text-xl font-bold",
             eligible ? "text-[#0a7d45]" : "text-[#b42318]",
           )}
         >
@@ -138,7 +139,7 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
         </span>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-base text-[#5a6b7d]">
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-lg text-[#5a6b7d]">
         <div className="flex items-center gap-2">
           <CalendarDays className="size-4 shrink-0" />
           <span className="truncate">Closes {deadline}</span>
@@ -164,14 +165,14 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
       </div>
 
       {description && (
-        <p className="mt-4 text-base leading-relaxed text-[#5a6b7d]">{description}</p>
+        <p className="mt-4 text-lg leading-relaxed text-[#5a6b7d]">{description}</p>
       )}
 
       {/* recruiter */}
-      <div className="mt-5 flex items-center gap-3 border-t border-[#d7e3f7] pt-5">
+      <div className="mt-4 flex items-center gap-3 border-t border-[#d7e3f7] pt-4">
         <Avatar name={recruiter.name} avatarUrl={recruiter.avatarUrl} size="h-10 w-10" />
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-[#0f172a]">{recruiter.name}</p>
+          <p className="truncate text-lg font-semibold text-[#0f172a]">{recruiter.name}</p>
           <p className="truncate text-base text-[#5a6b7d]">
             {recruiter.company}
             {recruiter.location ? ` · ${recruiter.location}` : ""}
@@ -182,18 +183,18 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
       {/* actions — this project's Button scale tops out at h-9 because the type
           scale is 0.8rem base, so the size is set here rather than via a
           variant. */}
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Button
           onClick={onApply}
           disabled={!eligible || applied || applying}
-          className="h-12 w-full rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white hover:bg-[#12a25a]"
+          className="h-11 w-full rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white hover:bg-[#12a25a]"
         >
           {applied ? "Applied" : applying ? "Sending…" : "Apply now"}
         </Button>
         <Button
           onClick={onSave}
           variant="outline"
-          className="h-12 w-full rounded-full border-[#eceff2] px-6 text-lg font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
+          className="h-11 w-full rounded-full border-[#eceff2] px-6 text-lg font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
         >
           {saved ? "Saved" : "Save for later"}
         </Button>

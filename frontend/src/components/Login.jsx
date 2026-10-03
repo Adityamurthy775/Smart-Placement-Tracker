@@ -7,6 +7,15 @@ import { GoogleLogin } from '@react-oauth/google';
 import { authInput } from '../../Styles/common';
 import { API_BASE } from '../lib/utils';
 
+// Must stay in step with demo-accounts.md / backend/seed-demo.js.
+const DEMO_PASSWORD = 'Demo@12345';
+const DEMO_ACCOUNTS = [
+  { role: 'Student', email: 'student@example.com' },
+  { role: 'Teacher', email: 'teacher@example.com' },
+  { role: 'HR', email: 'hr@example.com' },
+  { role: 'Admin', email: 'admin@example.com' },
+];
+
 function ForgotPasswordModal({ onClose }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [step, setStep] = useState('email'); // 'email' or 'reset'
@@ -109,6 +118,21 @@ function Login() {
   const navigate = useNavigate();
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [demoBusy, setDemoBusy] = useState('');
+
+  // The four accounts `npm run seed:demo` writes (see demo-accounts.md). One
+  // click signs in as that role — no typing, no password to copy.
+  const demoLogin = async (email) => {
+    setErrorMsg('');
+    setDemoBusy(email);
+    const result = await loginUser({ email, password: DEMO_PASSWORD });
+    setDemoBusy('');
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setErrorMsg(`${result.error} — run \`npm run seed:demo\` in backend/ to create the demo accounts.`);
+    }
+  };
 
   const onSubmit = async (data) => {
     setErrorMsg('');
@@ -204,6 +228,33 @@ function Login() {
           >
             Sign In
           </button>
+
+          {/* Demo login — one click per role */}
+          <div className="mt-2 rounded-2xl border border-secondary/60 bg-muted/40 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border"></div>
+              <span className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+                demo login
+              </span>
+              <div className="flex-1 h-px bg-border"></div>
+            </div>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              One click signs you in as a seeded role. No password needed.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {DEMO_ACCOUNTS.map(({ role, email }) => (
+                <button
+                  key={role}
+                  type="button"
+                  disabled={Boolean(demoBusy)}
+                  onClick={() => demoLogin(email)}
+                  className="rounded-xl border border-secondary bg-card px-3 py-2.5 text-sm font-semibold text-foreground transition hover:border-accent hover:bg-accent/15 disabled:opacity-60"
+                >
+                  {demoBusy === email ? 'Signing in…' : `Demo ${role}`}
+                </button>
+              ))}
+            </div>
+          </div>
           
           <div className="flex items-center gap-4 my-2">
             <div className="flex-1 h-px bg-border"></div>
