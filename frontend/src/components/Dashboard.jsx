@@ -13,8 +13,9 @@ import { ChartTooltip as BklitChartTooltip } from '@/components/charts/tooltip';
 import { UserContext } from '../contexts/UserContext';
 import { API_BASE, cn } from '@/lib/utils';
 import {
-  ArrowDown, ArrowUp, ArrowUpRight, BarChart3, Briefcase, FileText, LayoutGrid,
-  LogOut, Plus, RefreshCw, Search, Send, Settings, TrendingUp,
+  ArrowDown, ArrowUp, ArrowUpRight, BarChart3, Bell, Briefcase, FileText,
+  LayoutGrid, LogOut, Plus, RefreshCw, Search, Send, Settings, ShieldCheck,
+  TrendingUp,
 } from 'lucide-react';
 
 /* ───────────────────────────── design tokens ───────────────────────────── */
@@ -41,6 +42,74 @@ const RANGES = [
 ];
 
 const STATUSES = ['APPLIED', 'SHORTLISTED', 'INTERVIEW', 'SELECTED', 'REJECTED'];
+
+/* ───────────────────────────── notifications ──────────────────────────────── */
+// Feed derived client-side from application status timestamps the API already
+// returns — no notification table, no polling. ponytail: derived > stored.
+const STATUS_META = {
+  APPLIED: { verb: 'Applied', tone: 'bg-[#f1f4f6] text-[#5a6b7d]' },
+  SHORTLISTED: { verb: 'Shortlisted', tone: 'bg-[#e7f7ee] text-[#0a7d45]' },
+  INTERVIEW: { verb: 'Interview scheduled', tone: 'bg-[#fff7e0] text-[#8a6a00]' },
+  SELECTED: { verb: 'Selected', tone: 'bg-[#e7f7ee] text-[#0a7d45]' },
+  REJECTED: { verb: 'Not selected', tone: 'bg-[#fdecec] text-[#b42318]' },
+};
+
+function buildFeed(applications, closingSoon) {
+  const events = [];
+  applications.forEach((app) => {
+    const where = `${app.role || 'Role'} at ${app.company || 'Company'}`;
+    const stamps = [
+      [app.appliedAt || app.appliedDate, 'APPLIED'],
+      [app.shortlistedAt, 'SHORTLISTED'],
+      [app.interviewedAt, 'INTERVIEW'],
+      [app.selectedAt, 'SELECTED'],
+      [app.rejectedAt, 'REJECTED'],
+    ];
+    stamps.forEach(([at, status]) => {
+      const date = parseDate(at);
+      if (!date) return;
+      events.push({
+        key: `${app._id}-${status}`,
+        at: date,
+        title: `${STATUS_META[status].verb}: ${where}`,
+        tone: STATUS_META[status].tone,
+      });
+    });
+  });
+  closingSoon.forEach((drive) => {
+    events.push({
+      key: `deadline-${drive._id}`,
+      at: drive.at,
+      title: `Deadline in ${drive.daysLeft}d: ${drive.companyId?.CompanyName || drive.Title || 'Drive'}`,
+      tone: drive.daysLeft <= 3 ? 'bg-[#fdecec] text-[#b42318]' : 'bg-[#fff7e0] text-[#8a6a00]',
+    });
+  });
+  return events.sort((a, b) => b.at - a.at);
+}
+
+function NotificationsView({ events }) {
+  return (
+    <div className={cn(CARD, 'p-6')}>
+      <CardHead title="Notifications" sub="Status changes and upcoming deadlines" />
+      {events.length === 0 ? (
+        <p className="mt-6 text-sm text-[#8a97a5]">
+          Nothing yet. Application updates and drive deadlines show up here.
+        </p>
+      ) : (
+        <ul className="mt-4 flex flex-col divide-y divide-[#f1f4f6]">
+          {events.slice(0, 50).map((event) => (
+            <li key={event.key} className="flex items-center gap-3 py-3">
+              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', event.tone)}>
+                {event.at.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm text-[#0f172a]">{event.title}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 /* ───────────────────────────── helpers ─────────────────────────────────── */
 // One GET that reports failure instead of throwing: a 404 on /drive/hr/:id (HR
@@ -866,6 +935,86 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
   );
 }
 
+/* ───────────────────────────── admin panel ────────────────────────────────── */
+// Read-only roster over /admin-api (GET students/teachers/companies/drives).
+function AdminView() {
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState('loading');
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    if (status !== 'loading') return undefined;
+    let cancelled = false;
+    (async () => {
+      const cfg = { withCredentials: true };
+      const [students, teachers, companies, drives] = await Promise.all([
+        safeGet(`${API_BASE}/admin-api/admin/student`, cfg, { payload: [] }),
+        safeGet(`${API_BASE}/admin-api/admin/teacher`, cfg, { payload: [] }),
+        safeGet(`${API_BASE}/admin-api/admin/company`, cfg, { payload: [] }),
+        safeGet(`${API_BASE}/admin-api/admin/drive`, cfg, { payload: [] }),
+      ]);
+      if (cancelled) return;
+      const failed = [students, teachers, companies, drives].filter((r) => !r.ok).length;
+      if (failed === 4) {
+        setErr('Admin API unreachable. Is the backend running?');
+        setStatus('error');
+        return;
+      }
+      setData({
+        students: students.data.payload || [],
+        teachers: teachers.data.payload || [],
+        companies: companies.data.payload || [],
+        drives: drives.data.payload || [],
+      });
+      setStatus('ready');
+    })();
+    return () => { cancelled = true; };
+  }, [status]);
+
+  if (status === 'loading') {
+    return (
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Skeleton className="h-40" />
+        <Skeleton className="h-40" />
+        <Skeleton className="h-40" />
+        <Skeleton className="h-40" />
+      </div>
+    );
+  }
+  if (status === 'error') return <ErrorPanel message={err} onRetry={() => setStatus('loading')} />;
+
+  const columns = [
+    { title: 'Students', rows: data.students, render: (s) => `${s.Deatils?.name || 'Student'} · Roll ${s.Rollno} · ${s.Branch || '—'} · CGPA ${s.CGPA ?? '—'}` },
+    { title: 'Teachers', rows: data.teachers, render: (t) => `${t.Deatils?.name || 'Teacher'} · ${t.designation || '—'} · ${t.department || '—'}` },
+    { title: 'Companies', rows: data.companies, render: (c) => `${c.CompanyName || 'Company'} · ${c.Email || '—'}` },
+    { title: 'Drives', rows: data.drives, render: (d) => `${d.companyId?.CompanyName || 'Drive'} · ${d.JobRole || '—'} · ${d.Package || '—'}` },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      {columns.map(({ title, rows, render }) => (
+        <div key={title} className={cn(CARD, 'p-5')}>
+          <CardHead title={title} sub={`${rows.length} total`} />
+          {rows.length === 0 ? (
+            <p className="mt-4 text-xs text-[#8a97a5]">None on record.</p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {rows.slice(0, 8).map((row, i) => (
+                <li key={row._id || i} className="truncate rounded-xl bg-[#f1f4f6] px-3 py-2 text-xs text-[#0f172a]">
+                  {render(row)}
+                </li>
+              ))}
+              {rows.length > 8 && (
+                <li className="text-[11px] font-semibold text-[#8a97a5]">+{rows.length - 8} more</li>
+              )}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ───────────────────────────── page ────────────────────────────────────── */
 export default function Dashboard() {
   const { user, profileDetails, logout, saveProfileDetails } = useContext(UserContext);
@@ -890,6 +1039,17 @@ export default function Dashboard() {
   const role = String(user?.role || '').toLowerCase();
   const isHR = role === 'hr';
   const isStudent = role === 'student';
+  const isAdmin = role === 'admin';
+
+  // Everyone gets Notifications; Admin additionally gets the roster panel.
+  const navItems = useMemo(
+    () => [
+      ...NAV,
+      { key: 'notifications', label: 'Notifications', Icon: Bell },
+      ...(isAdmin ? [{ key: 'admin', label: 'Admin', Icon: ShieldCheck }] : []),
+    ],
+    [isAdmin],
+  );
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -1015,6 +1175,11 @@ export default function Dashboard() {
     return Math.round((filled / fields.length) * 100);
   }, [profileDetails]);
 
+  const feed = useMemo(
+    () => buildFeed(applications, closingSoon),
+    [applications, closingSoon],
+  );
+
   const avgPackage = analytics?.avgPackage ?? 0;
   const totalPlacements = analytics?.totalPlacements ?? 0;
   const firstName = String(user?.name || '').split(' ')[0] || 'there';
@@ -1091,7 +1256,7 @@ export default function Dashboard() {
           </Link>
 
           <nav className="flex flex-wrap gap-1.5 rounded-2xl border border-[#eceff2] bg-white p-1.5">
-            {NAV.map(({ key, label, Icon }) => (
+            {navItems.map(({ key, label, Icon }) => (
               <button
                 key={key}
                 type="button"
@@ -1175,7 +1340,7 @@ export default function Dashboard() {
         <div className="mt-5 flex gap-5">
           <aside className="hidden shrink-0 flex-col justify-between self-stretch rounded-3xl border border-[#eceff2] bg-white py-5 lg:flex">
             <div className="flex flex-col items-center gap-3">
-              {NAV.map(({ key, label, Icon }) => (
+              {navItems.map(({ key, label, Icon }) => (
                 <button
                   key={key}
                   type="button"
@@ -1404,6 +1569,10 @@ export default function Dashboard() {
                 applications={applications}
                 successRate={successRate}
               />
+            ) : tab === 'notifications' ? (
+              <NotificationsView events={feed} />
+            ) : tab === 'admin' ? (
+              <AdminView />
             ) : (
               <SettingsView
                 user={user}

@@ -3,8 +3,13 @@ import { StudentModel } from '../modules/StudentModel.js'
 import { DriveModel } from '../modules/DriveModel.js'
 import { TeacherModel } from '../modules/TeacherModel.js'
 import { CompanyModel } from '../modules/CompanyModel.js'
+import { verifyToken } from '../middleware/verifyToken.js'
 
 export const Adminapp=exp.Router();
+
+// Every route below lists user data for the whole campus — token + Admin role
+// required. (This router was previously wide open.)
+Adminapp.use(verifyToken("Admin"));
 
 //get all the students
 Adminapp.get('/admin/student',async(req,res)=>{

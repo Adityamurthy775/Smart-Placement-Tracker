@@ -459,3 +459,77 @@ are used**, and added one measurement harness to prove it.
 - `npm run build` exit 0; ESLint clean on all 19 touched files.
 - Measured repo-wide lint is 39 problems (27 errors, 12 warnings) — unchanged
   by this work; see `handover.md` §8 for the per-file breakdown.
+---
+
+## Session 5 — cleanup, light theme on the app surfaces, notifications + admin
+
+Closed out the items `handover.md` §9 and `changelogs.md` had listed as open.
+
+### Added
+
+- **`Dashboard.jsx` — Notifications tab.** A feed derived from data the API
+  already returns: every `appliedAt` / `shortlistedAt` / `interviewedAt` /
+  `selectedAt` / `rejectedAt` timestamp on the user's applications becomes one
+  row, plus a row per drive closing in the next 30 days. `buildFeed()` sorts
+  newest-first. No new table, no polling, no backend route.
+- **`Dashboard.jsx` — Admin tab**, shown only when `role === 'admin'`. Reads
+  `/admin-api/admin/{student,teacher,company,drive}` in parallel and renders
+  four count + top-8 lists. Read-only by design; the backend only has GETs.
+- **`backend/APIS/adminapi.js`** — `Adminapp.use(verifyToken("Admin"))`. This
+  router was previously mounted with **no authentication at all**: anyone who
+  could reach the port could read every student, teacher, company and drive.
+  Verified against a running server: no cookie → `401`, garbage cookie →
+  `401`, signed Admin cookie → `200` with payload.
+
+### Changed
+
+- **`frontend/src/App.jsx`** — `Mainpage` and `Dashboard` are now
+  `React.lazy` behind a `<Suspense fallback={null}>`, so `chart.js`,
+  `recharts` and `xlsx` no longer load on the landing route. Landing chunk
+  1.17 MB → **443 KB** (`Mainpage` 556 KB and `Dashboard` 619 KB now load only
+  on their routes). Also dropped the `/header` and `/footer` test routes and
+  their imports.
+- **Light theme, `Mainpage.jsx` + `AnalyticsDashboard.jsx`** — the deferred
+  pass from Session 3. `bg-[#1a1a1a]` / `bg-[#111111]` / `bg-[#0f0f0f]` →
+  `bg-white`; `bg-[#080808]` / `bg-[#0a0a0a]` → `bg-background`;
+  `border-[#333333]` / `border-[#222222]` / `border-[#444444]` →
+  `border-[#c3d7ec]`; `text-white` → `text-[#071005]` except on coloured and
+  gradient buttons; `text-gray-400/300/200` → `text-[#5a6b7d]` (they fail AA on
+  white); chart.js tick/grid colours `#666` → `#5a6b7d`,
+  `rgba(255,255,255,0.0x)` → `rgba(7,16,5,0.0x)`. `Login` / `Register` are
+  still dark.
+- **`frontend/eslint.config.js`** — four React-Compiler-era rules
+  (`react-hooks/refs`, `react-hooks/set-state-in-effect`,
+  `react-hooks/preserve-manual-memoization`,
+  `react-refresh/only-export-components`) downgraded to `warn`; a Node-globals
+  override for `vite.config.js`.
+- **`handover.md`** — §3 file map, §5.4 scope, §8 lint + git notes, §9 next
+  steps all updated to the current state.
+
+### Removed
+
+- **`frontend/src/components/CarouselSection.jsx`** and
+  **`frontend/src/components/ui/CircularCarousel.jsx`** — unused since
+  `ExpandCards` replaced the carousel. (`git checkout c532e1f --` to get them
+  back.)
+- Dead code in `Mainpage.jsx`: `getDriveOwnerId`, and the entire HR company
+  form state and handlers (`form`, `editingCompany`, `saving`, `handleSubmit`,
+  `handleEdit`, `handleFieldChange`, `resetForm`) plus `hireChartData` /
+  `hireHistory` — the UI that used them was already deleted in an earlier
+  session, only the state was left. `TeacherReports` lost three unused props.
+- Unused `import React from 'react'` in `UserContext.jsx`, `Mainpage.jsx` and
+  `gradient-bars-background.jsx`; an unused `catch (err)` binding in
+  `UserContext.jsx`; a useless `let point = null` in `use-chart-interaction.js`.
+
+### Added (repo)
+
+- **`git init` + initial commit.** The tree had no version control at all. The
+  first commit is a pre-work snapshot.
+
+### Verified
+
+- `npm run build` exit 0; `npx eslint .` → **0 errors**, 69 warnings (baseline
+  was 68 errors).
+- Dev server: `/`, `/dashboard`, `/src/components/Dashboard.jsx` all HTTP 200.
+- Admin API auth gate tested against a live server as described above.
+- No stray `server.js` / `vite` processes left running.
