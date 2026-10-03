@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE } from '../lib/utils';
 
@@ -39,7 +39,7 @@ export const UserProvider = ({ children }) => {
           setUser(normalizeUser(response.data.user));
           setProfileDetails(response.data.profileDetails || null);
         }
-      } catch (err) {
+      } catch {
         // Not logged in or invalid token
         console.log("No active session found.");
       }

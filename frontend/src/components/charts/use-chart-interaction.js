@@ -87,7 +87,7 @@ export function useChartInteraction(
   }, [xScale, data, xAccessor, bisectDate]);
 
   const getChartX = useCallback((event, touchIndex = 0) => {
-    let point = null;
+    let point;
 
     if ("touches" in event) {
       const touch = event.touches[touchIndex];

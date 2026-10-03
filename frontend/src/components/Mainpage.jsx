@@ -1,5 +1,5 @@
 // React and third-party library imports
-import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, ScrollRestoration } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { UserContext } from '../contexts/UserContext';
@@ -82,9 +82,6 @@ const fileToDataUrl = (file) => new Promise((resolve, reject) => {
 });
 
 // Save or update a student application in local storage and track applied drive IDs
-const getCompanyName = (drive) => drive?.companyId?.CompanyName || drive?.company || 'Unknown';
-const getDriveOwnerId = (drive) => String(drive?.hrId?._id || drive?.hrId || '');
-
 const isProfileComplete = (profileDetails, role) => {
   const normalizedRole = String(role || '').toLowerCase();
   if (normalizedRole === 'hr') {
@@ -1355,7 +1352,7 @@ function StudentAnalytics({ applications = [], drives = [] }) {
 
 /* ─────────────── Teacher Reports Panel ─────────────── */
 // Teacher dashboard for placement reporting, charts, and export actions
-function TeacherReports({ user, profileDetails, drives = [], allApplications = [], showToast }) {
+function TeacherReports({ drives = [], allApplications = [] }) {
   const [applications, setApplications] = useState([]);
   const [allApps, setAllApps] = useState(allApplications);
 
@@ -1400,7 +1397,7 @@ function TeacherReports({ user, profileDetails, drives = [], allApplications = [
     return schemaBranches.includes(value) ? value : 'unknown';
   };
 
-  const branchChartData = React.useMemo(() => {
+  const branchChartData = useMemo(() => {
     const branchData = groupCount(applications, a => normalizeBranch(a.studentBranch));
     const labels = [...schemaBranches, ...Object.keys(branchData).filter(key => !schemaBranches.includes(key))];
     const data = labels.map(label => branchData[label] || 0);
@@ -1415,7 +1412,7 @@ function TeacherReports({ user, profileDetails, drives = [], allApplications = [
     };
   }, [applications]);
 
-  const companyChartData = React.useMemo(() => {
+  const companyChartData = useMemo(() => {
     const companyData = groupCount(applications, a => a.company || 'Unknown');
     const labels = Object.keys(companyData);
     const data = Object.values(companyData);
@@ -1430,7 +1427,7 @@ function TeacherReports({ user, profileDetails, drives = [], allApplications = [
     };
   }, [applications]);
 
-  const reportRows = React.useMemo(() => {
+  const reportRows = useMemo(() => {
     if (activeReport === 'branch') {
       return toRows(groupCount(applications, a => normalizeBranch(a.studentBranch)), 'Branch', 'Placements');
     }
@@ -1619,9 +1616,6 @@ function SkeletonRow() {
 /* ─────────────── HR Dashboard ─────────────── */
 // HR view for managing companies, drives, and hiring activity
 function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
-  const [form, setForm] = useState({ CompanyName: '', CompanyId: '', Email: '', Descrption: '' });
-  const [editingCompany, setEditingCompany] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [applications, setApplications] = useState([]);
 
   useEffect(() => {
@@ -1665,76 +1659,6 @@ function HRDashboard({ companies, drives, onCompaniesUpdated, showToast }) {
       }],
     };
   }, [stats]);
-
-  const hireHistory = React.useMemo(() => {
-    return toRows(groupCount(drives.filter(d => d.companyId?.CompanyName), d => getCompanyName(d)), 'Company', 'Posted Drives');
-  }, [drives]);
-
-  const hireChartData = React.useMemo(() => {
-    const labels = hireHistory.map(h => h.Company);
-    const data = hireHistory.map(h => h['Posted Drives']);
-    return {
-      labels,
-      datasets: [{
-        label: 'Posted Drives',
-        data,
-        backgroundColor: ['#378ADD', '#EF9F27', '#639922', '#E24B4A', '#9D5C9E', '#FF6B6B', '#4ECDC4', '#45B7D1'].slice(0, labels.length),
-        borderWidth: 0,
-      }],
-    };
-  }, [hireHistory]);
-
-  const handleFieldChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-
-  const resetForm = () => {
-    setEditingCompany(null);
-    setForm({ CompanyName: '', CompanyId: '', Email: '', Descrption: '' });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      CompanyName: form.CompanyName,
-      CompanyId: Number(form.CompanyId),
-      Email: form.Email,
-      Descrption: form.Descrption,
-      isActive: true,
-    };
-
-    if (!payload.CompanyName || !payload.CompanyId || !payload.Email) {
-      showToast('Company name, ID and email are required.', 'error');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      if (editingCompany) {
-        const companyKey = editingCompany.CompanyId || editingCompany._id;
-        await axios.put(`${API_BASE}/company-api/company/${companyKey}`, payload, { withCredentials: true });
-        showToast('Company updated successfully.');
-      } else {
-        await axios.post(`${API_BASE}/company-api/company`, payload, { withCredentials: true });
-        showToast('Company added successfully.');
-      }
-      resetForm();
-      onCompaniesUpdated();
-    } catch (err) {
-      console.error('Company submit failed', err);
-      showToast('Failed to save company details.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = (company) => {
-    setEditingCompany(company);
-    setForm({
-      CompanyName: company.CompanyName || '',
-      CompanyId: String(company.CompanyId || ''),
-      Email: company.Email || '',
-      Descrption: company.Descrption || '',
-    });
-  };
 
   const handleToggleActive = async (company) => {
     try {
@@ -2418,7 +2342,7 @@ function Mainpage() {
           )}
 
           {activeView === 'analytics' && isTeacher && (
-            <TeacherReports user={user} profileDetails={profileDetails} drives={drives} />
+            <TeacherReports drives={drives} />
           )}
 
           {activeView === 'analytics' && isHR && (

@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import {createBrowserRouter, RouterProvider} from 'react-router'
 import RootLayout from './components/RootLayout'
-import Header from './components/Header'
 import Home from './components/Home'
-import Footer from './components/Footer'
 import Login from './components/Login'
 import Register from './components/Register'
-import Mainpage from './components/Mainpage'
-import Dashboard from './components/Dashboard'
 import Preloader from './components/Preloader'
+
+// Route-level code split: chart.js / recharts / xlsx live in these two files
+// and are the bulk of the 1.17 MB bundle warning.
+const Mainpage = lazy(() => import('./components/Mainpage'))
+const Dashboard = lazy(() => import('./components/Dashboard'))
 
 function App() {
   const [loading, setLoading] = useState(true)
@@ -27,14 +28,6 @@ function App() {
         {
           path:"",
           element:<Home/>
-        },
-        {
-          path:"header",
-          element:<Header/>
-        },
-        {
-          path:"footer",
-          element:<Footer/>
         },
         {
           path:"login",
@@ -59,7 +52,9 @@ function App() {
 
   return (
     <div>
-      <RouterProvider router={routerobj}/>
+      <Suspense fallback={null}>
+        <RouterProvider router={routerobj}/>
+      </Suspense>
     </div>
   )
 }
