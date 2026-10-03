@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router';
 import {
@@ -97,17 +97,17 @@ function NotificationsView({ events }) {
     <div className={cn(CARD, 'p-6')}>
       <CardHead title="Notifications" sub="Status changes and upcoming deadlines" />
       {events.length === 0 ? (
-        <p className="mt-6 text-sm text-[#8a97a5]">
+        <p className="mt-6 text-base text-[#8a97a5]">
           Nothing yet. Application updates and drive deadlines show up here.
         </p>
       ) : (
         <ul className="mt-4 flex flex-col divide-y divide-[#f1f4f6]">
           {events.slice(0, 50).map((event) => (
             <li key={event.key} className="flex items-center gap-3 py-3">
-              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase', event.tone)}>
+              <span className={cn('rounded-full px-2 py-0.5 text-sm font-bold uppercase', event.tone)}>
                 {event.at.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm text-[#0f172a]">{event.title}</span>
+              <span className="min-w-0 flex-1 truncate text-base text-[#0f172a]">{event.title}</span>
             </li>
           ))}
         </ul>
@@ -135,6 +135,17 @@ const parseDate = (value) => {
   const d = value instanceof Date ? value : new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 };
+
+// Resume files go to the API as a data URL (the schema stores resumeUrl as a
+// string and there is no upload route), the same way Mainpage's modal did it.
+const fileToDataUrl = (file) =>
+  new Promise((resolve) => {
+    if (!file) return resolve('');
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
 
 const monthLabel = (date) =>
   date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
@@ -183,8 +194,8 @@ function CardHead({ title, sub, action }) {
   return (
     <div className="flex items-start justify-between gap-3">
       <div>
-        <h3 className="text-base font-bold text-[#0f172a]">{title}</h3>
-        {sub && <p className="text-xs text-[#8a97a5]">{sub}</p>}
+        <h3 className="text-lg font-bold text-[#0f172a]">{title}</h3>
+        {sub && <p className="text-sm text-[#8a97a5]">{sub}</p>}
       </div>
       {action}
     </div>
@@ -201,9 +212,9 @@ function KpiCard({ label, value, hint, tone = 'plain' }) {
   };
   return (
     <div className={cn(CARD, 'flex-1 p-4')}>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a97a5]">{label}</p>
-      <p className={cn('mt-1 text-3xl font-bold', tones[tone])}>{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-[#8a97a5]">{hint}</p>}
+      <p className="text-sm font-semibold uppercase tracking-wide text-[#8a97a5]">{label}</p>
+      <p className={cn('mt-1 text-4xl font-bold', tones[tone])}>{value}</p>
+      {hint && <p className="mt-0.5 text-sm text-[#8a97a5]">{hint}</p>}
     </div>
   );
 }
@@ -215,12 +226,12 @@ function Skeleton({ className }) {
 function ErrorPanel({ message, onRetry }) {
   return (
     <div className={cn(CARD, 'flex flex-col items-center gap-3 p-10 text-center')}>
-      <p className="text-sm font-semibold text-[#b42318]">Could not load dashboard data</p>
-      <p className="text-xs text-[#8a97a5]">{message}</p>
+      <p className="text-base font-semibold text-[#b42318]">Could not load dashboard data</p>
+      <p className="text-sm text-[#8a97a5]">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="rounded-full bg-[#0a7d45] px-4 py-2 text-xs font-bold text-white"
+        className="rounded-full bg-[#0a7d45] px-4 py-2 text-sm font-bold text-white"
       >
         Retry
       </button>
@@ -286,7 +297,7 @@ function TrackerCard({ rows, mode, onModeChange }) {
                   type="button"
                   onClick={() => onModeChange(key)}
                   className={cn(
-                    'rounded-full px-3 py-1 text-xs font-semibold capitalize transition',
+                    'rounded-full px-3 py-1 text-sm font-semibold capitalize transition',
                     mode === key ? 'bg-[#0a7d45] text-white' : 'text-[#5a6b7d]',
                   )}
                 >
@@ -300,7 +311,7 @@ function TrackerCard({ rows, mode, onModeChange }) {
       />
 
       {rows.length === 0 ? (
-        <div className="flex h-[240px] items-center justify-center text-xs text-[#8a97a5]">
+        <div className="flex h-[240px] items-center justify-center text-sm text-[#8a97a5]">
           No applications in this range yet.
         </div>
       ) : (
@@ -358,11 +369,11 @@ function TrendCard({ points, rangeDays, onGoDrives, onGoApplications }) {
         action={<RoundAction><TrendingUp size={15} /></RoundAction>}
       />
 
-      <p className="mt-4 text-center text-xs text-[#8a97a5]">Applications sent</p>
-      <p className="text-center text-3xl font-bold text-[#0f172a]">{total}</p>
+      <p className="mt-4 text-center text-sm text-[#8a97a5]">Applications sent</p>
+      <p className="text-center text-4xl font-bold text-[#0f172a]">{total}</p>
 
       {points.length < 2 ? (
-        <div className="mt-4 flex h-[130px] items-center justify-center rounded-2xl border border-dashed border-[#eceff2] text-xs text-[#8a97a5]">
+        <div className="mt-4 flex h-[130px] items-center justify-center rounded-2xl border border-dashed border-[#eceff2] text-sm text-[#8a97a5]">
           Not enough activity in this range.
         </div>
       ) : (
@@ -383,14 +394,14 @@ function TrendCard({ points, rangeDays, onGoDrives, onGoApplications }) {
         <button
           type="button"
           onClick={onGoDrives}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0a7d45] px-4 py-2.5 text-xs font-bold text-white"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0a7d45] px-4 py-2.5 text-sm font-bold text-white"
         >
           Browse drives <ArrowUp size={13} />
         </button>
         <button
           type="button"
           onClick={onGoApplications}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#eceff2] px-4 py-2.5 text-xs font-bold text-[#5a6b7d]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#eceff2] px-4 py-2.5 text-sm font-bold text-[#5a6b7d]"
         >
           My applications <ArrowDown size={13} />
         </button>
@@ -428,10 +439,10 @@ function RecentTable({ rows, query, onClearQuery, onGoDrives }) {
 
       {latest.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center">
-          <p className="text-sm font-semibold text-[#0f172a]">
+          <p className="text-base font-semibold text-[#0f172a]">
             {rows.length === 0 ? 'No applications yet' : 'No match for that search'}
           </p>
-          <p className="text-xs text-[#8a97a5]">
+          <p className="text-sm text-[#8a97a5]">
             {rows.length === 0
               ? 'Browse open drives and apply to start filling this table.'
               : 'Clear the search box to see everything again.'}
@@ -440,7 +451,7 @@ function RecentTable({ rows, query, onClearQuery, onGoDrives }) {
             <button
               type="button"
               onClick={onGoDrives}
-              className="mt-1 rounded-full bg-[#0a7d45] px-4 py-2 text-xs font-bold text-white"
+              className="mt-1 rounded-full bg-[#0a7d45] px-4 py-2 text-sm font-bold text-white"
             >
               Browse drives
             </button>
@@ -448,7 +459,7 @@ function RecentTable({ rows, query, onClearQuery, onGoDrives }) {
             <button
               type="button"
               onClick={onClearQuery}
-              className="mt-1 text-xs font-bold text-[#0a7d45] underline"
+              className="mt-1 text-sm font-bold text-[#0a7d45] underline"
             >
               Clear search
             </button>
@@ -458,7 +469,7 @@ function RecentTable({ rows, query, onClearQuery, onGoDrives }) {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[560px] text-left">
             <thead>
-              <tr className="text-[11px] font-semibold text-[#8a97a5]">
+              <tr className="text-sm font-semibold text-[#8a97a5]">
                 <th className="pb-3 font-semibold">Company</th>
                 <th className="pb-3 font-semibold">Role</th>
                 <th className="pb-3 font-semibold">Applied</th>
@@ -472,21 +483,21 @@ function RecentTable({ rows, query, onClearQuery, onGoDrives }) {
                   <td className="py-3">
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-[11px] font-bold text-white"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-sm font-bold text-white"
                       >
                         {initials(row.company)}
                       </span>
-                      <span className="text-xs font-bold text-[#0f172a]">{row.company || '—'}</span>
+                      <span className="text-sm font-bold text-[#0f172a]">{row.company || '—'}</span>
                     </div>
                   </td>
-                  <td className="py-3 text-xs text-[#5a6b7d]">{row.role || '—'}</td>
-                  <td className="py-3 text-xs text-[#5a6b7d]">{row.appliedDate || '—'}</td>
+                  <td className="py-3 text-sm text-[#5a6b7d]">{row.role || '—'}</td>
+                  <td className="py-3 text-sm text-[#5a6b7d]">{row.appliedDate || '—'}</td>
                   <td className="py-3">
-                    <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
+                    <span className={cn('rounded-full px-2.5 py-1 text-sm font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
                       {row.status || 'APPLIED'}
                     </span>
                   </td>
-                  <td className="py-3 text-right text-xs font-semibold text-[#0f172a]">
+                  <td className="py-3 text-right text-sm font-semibold text-[#0f172a]">
                     {row.salary ? formatMoney(String(row.salary).replace(/[^\d.]/g, '')) + ' LPA' : '—'}
                   </td>
                 </tr>
@@ -536,10 +547,10 @@ function AnalyticsSection({ counts, applications, successRate }) {
     <section className="mt-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-[#0f172a]">My Analytics</h2>
-          <p className="text-xs text-[#8a97a5]">Everything the Reports view computes, on this page</p>
+          <h2 className="text-2xl font-bold text-[#0f172a]">My Analytics</h2>
+          <p className="text-sm text-[#8a97a5]">Everything the Reports view computes, on this page</p>
         </div>
-        <span className="rounded-full bg-[#e7f7ee] px-3 py-1.5 text-xs font-bold text-[#0a7d45]">
+        <span className="rounded-full bg-[#e7f7ee] px-3 py-1.5 text-sm font-bold text-[#0a7d45]">
           Success rate {successRate}%
         </span>
       </div>
@@ -548,7 +559,7 @@ function AnalyticsSection({ counts, applications, successRate }) {
         <div className={cn(CARD, 'p-5')}>
           <CardHead title="Status Breakdown" sub="Every application by where it stands" />
           {donut.length === 0 ? (
-            <p className="mt-6 text-xs text-[#8a97a5]">No applications yet.</p>
+            <p className="mt-6 text-sm text-[#8a97a5]">No applications yet.</p>
           ) : (
             <>
               <div className="mt-3 flex justify-center">
@@ -568,7 +579,7 @@ function AnalyticsSection({ counts, applications, successRate }) {
                   </RPie>
                   <RTooltip
                     content={({ payload }) => (
-                      <span className="rounded-lg bg-[#0f172a] px-2.5 py-1.5 text-[11px] font-semibold text-white">
+                      <span className="rounded-lg bg-[#0f172a] px-2.5 py-1.5 text-sm font-semibold text-white">
                         {payload?.[0]?.name}: {payload?.[0]?.value}
                       </span>
                     )}
@@ -577,7 +588,7 @@ function AnalyticsSection({ counts, applications, successRate }) {
               </div>
               <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
                 {donut.map((slice) => (
-                  <span key={slice.status} className="flex items-center gap-1.5 text-[11px] text-[#5a6b7d]">
+                  <span key={slice.status} className="flex items-center gap-1.5 text-sm text-[#5a6b7d]">
                     <span className="h-2.5 w-2.5 rounded-sm" style={{ background: STATUS_COLOR[slice.status] }} />
                     {slice.status} {slice.value}
                   </span>
@@ -590,12 +601,12 @@ function AnalyticsSection({ counts, applications, successRate }) {
         <div className={cn(CARD, 'p-5')}>
           <CardHead title="Top Companies" sub="Where the applications went" />
           {byCompany.length === 0 ? (
-            <p className="mt-6 text-xs text-[#8a97a5]">No applications yet.</p>
+            <p className="mt-6 text-sm text-[#8a97a5]">No applications yet.</p>
           ) : (
             <div className="mt-4 flex flex-col gap-3">
               {byCompany.map((row) => (
                 <div key={row.company} className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 truncate text-[11px] font-semibold text-[#5a6b7d]">
+                  <span className="w-24 shrink-0 truncate text-sm font-semibold text-[#5a6b7d]">
                     {row.company}
                   </span>
                   <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#f1f4f6]">
@@ -604,7 +615,7 @@ function AnalyticsSection({ counts, applications, successRate }) {
                       style={{ width: `${Math.round((row.value / maxCompany) * 100)}%` }}
                     />
                   </span>
-                  <span className="w-5 shrink-0 text-right text-[11px] font-bold text-[#0f172a]">
+                  <span className="w-5 shrink-0 text-right text-sm font-bold text-[#0f172a]">
                     {row.value}
                   </span>
                 </div>
@@ -618,7 +629,7 @@ function AnalyticsSection({ counts, applications, successRate }) {
           <div className="mt-4 flex flex-col gap-3">
             {funnel.map((stage, index) => (
               <div key={stage.label}>
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-sm">
                   <span className="font-semibold text-[#5a6b7d]">{stage.label}</span>
                   <span className="font-bold text-[#0f172a]">{stage.value}</span>
                 </div>
@@ -634,7 +645,7 @@ function AnalyticsSection({ counts, applications, successRate }) {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-[11px] text-[#8a97a5]">
+          <p className="mt-4 text-sm text-[#8a97a5]">
             {counts.SELECTED} offer{counts.SELECTED === 1 ? '' : 's'} from{' '}
             {funnel[0].value} application{funnel[0].value === 1 ? '' : 's'}.
           </p>
@@ -658,7 +669,7 @@ function driveEligibility(drive, cgpa, branch) {
   return open && cgpaOk && branchOk;
 }
 
-function DrivesView({ drives, applications, cgpa, branch, onApply, applying, notice }) {
+function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying, notice }) {
   const [q, setQ] = useState('');
   // "Save for later" — a list of drive ids in localStorage, so it survives the
   // tab without asking the backend for a table it does not have.
@@ -699,8 +710,8 @@ function DrivesView({ drives, applications, cgpa, branch, onApply, applying, not
     <div className="flex flex-col gap-5">
       <div className={cn(CARD, 'flex flex-wrap items-center justify-between gap-3 p-5')}>
         <div>
-          <h2 className="text-xl font-bold text-[#0f172a]">Available Drives</h2>
-          <p className="text-xs text-[#8a97a5]">{rows.length} of {drives.length} drives</p>
+          <h2 className="text-2xl font-bold text-[#0f172a]">Available Drives</h2>
+          <p className="text-sm text-[#8a97a5]">{rows.length} of {drives.length} drives</p>
         </div>
         <label className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5">
           <Search size={14} className="text-[#8a97a5]" />
@@ -708,21 +719,21 @@ function DrivesView({ drives, applications, cgpa, branch, onApply, applying, not
             value={q}
             onChange={(event) => setQ(event.target.value)}
             placeholder="Search company, role or package"
-            className="w-56 bg-transparent text-sm text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
+            className="w-56 bg-transparent text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
           />
         </label>
       </div>
 
       {notice && (
-        <p className="rounded-2xl border border-[#e7f7ee] bg-[#e7f7ee] px-4 py-3 text-xs font-semibold text-[#0a7d45]">
+        <p className="rounded-2xl border border-[#e7f7ee] bg-[#e7f7ee] px-4 py-3 text-sm font-semibold text-[#0a7d45]">
           {notice}
         </p>
       )}
 
       {rows.length === 0 ? (
         <div className={cn(CARD, 'p-10 text-center')}>
-          <p className="text-sm font-semibold text-[#0f172a]">No drive matches that search</p>
-          <button type="button" onClick={() => setQ('')} className="mt-2 text-xs font-bold text-[#0a7d45] underline">
+          <p className="text-base font-semibold text-[#0f172a]">No drive matches that search</p>
+          <button type="button" onClick={() => setQ('')} className="mt-2 text-sm font-bold text-[#0a7d45] underline">
             Clear search
           </button>
         </div>
@@ -773,7 +784,7 @@ function DrivesView({ drives, applications, cgpa, branch, onApply, applying, not
                   company,
                   location: drive.companyId?.Location || '',
                 }}
-                onApply={() => onApply(drive)}
+                onApply={() => onOpenApply(drive)}
                 onSave={() => toggleSaved(drive._id)}
                 applied={already}
                 applying={applying}
@@ -784,6 +795,110 @@ function DrivesView({ drives, applications, cgpa, branch, onApply, applying, not
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Apply modal: the form the "Apply now" button opens ──────────────────── */
+// The card's Apply button used to POST straight from the card, so there was no
+// form to see. This shows the profile that will be sent, lets the resume be
+// attached, and only then posts.
+function ApplyModal({ drive, user, profileDetails, onClose, onSubmit, applying }) {
+  const [resume, setResume] = useState(null);
+  const [note, setNote] = useState('');
+  const inputRef = useRef(null);
+  const company = drive?.companyId?.CompanyName || 'Company';
+  const lastDate = parseDate(drive?.LastDate);
+
+  const rows = [
+    ['Name', user?.name],
+    ['Email', user?.email],
+    ['CGPA', profileDetails?.cgpa],
+    ['Branch', profileDetails?.branch],
+    ['Phone', profileDetails?.phone],
+    ['Skills', profileDetails?.skills],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#0f172a]/55 p-4">
+      <div className="w-full max-w-xl rounded-3xl border border-[#eceff2] bg-white p-7">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-[#0f172a]">Apply — {company}</h2>
+            <p className="mt-1 text-base text-[#5a6b7d]">
+              {drive?.JobRole} · {drive?.Package}
+              {lastDate ? ` · closes ${lastDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f1f4f6] text-lg text-[#5a6b7d] hover:bg-[#e8ecef]"
+          >
+            ×
+          </button>
+        </div>
+
+        <h3 className="mt-6 text-lg font-bold text-[#0f172a]">Profile we will send</h3>
+        <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {rows.map(([label, value]) => (
+            <div key={label} className="rounded-2xl bg-[#f1f4f6] px-4 py-2.5">
+              <dt className="text-sm text-[#5a6b7d]">{label}</dt>
+              <dd className="truncate text-base font-semibold text-[#0f172a]">
+                {String(value ?? '').trim() || '—'}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        {!(profileDetails?.cgpa || profileDetails?.branch) && (
+          <p className="mt-3 rounded-2xl bg-[#fff7e0] px-4 py-3 text-base text-[#8a6a00]">
+            Your profile is incomplete. Fill CGPA and branch in Settings first — the drive
+            eligibility check needs them.
+          </p>
+        )}
+
+        <label className="mt-6 block">
+          <span className="text-lg font-bold text-[#0f172a]">Resume (PDF)</span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf,.pdf,.doc,.docx"
+            onChange={(event) => setResume(event.target.files?.[0] || null)}
+            className="mt-2 w-full rounded-2xl border border-[#eceff2] bg-[#fafbfc] px-4 py-3 text-base text-[#0f172a] file:mr-4 file:rounded-full file:border-0 file:bg-[#0a7d45] file:px-4 file:py-2 file:text-base file:font-bold file:text-white"
+          />
+          {resume && <span className="mt-2 block text-sm text-[#5a6b7d]">Attached: {resume.name}</span>}
+        </label>
+
+        <label className="mt-4 block">
+          <span className="text-lg font-bold text-[#0f172a]">Note to the recruiter (optional)</span>
+          <textarea
+            rows={3}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="One or two lines about why you fit this role."
+            className="mt-2 w-full resize-none rounded-2xl border border-[#eceff2] bg-[#fafbfc] px-4 py-3 text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd] focus:border-[#0a7d45]"
+          />
+        </label>
+
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full border border-[#eceff2] px-6 text-lg font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={applying}
+            onClick={() => onSubmit({ resume, note })}
+            className="h-12 rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white transition hover:bg-[#12a25a] disabled:opacity-60"
+          >
+            {applying ? 'Sending…' : 'Submit application'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -814,10 +929,10 @@ function ApplicationsView({ applications, query, onClearQuery }) {
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center">
-          <p className="text-sm font-semibold text-[#0f172a]">
+          <p className="text-base font-semibold text-[#0f172a]">
             {applications.length === 0 ? 'No applications yet' : 'No match for that search'}
           </p>
-          <button type="button" onClick={onClearQuery} className="text-xs font-bold text-[#0a7d45] underline">
+          <button type="button" onClick={onClearQuery} className="text-sm font-bold text-[#0a7d45] underline">
             {applications.length === 0 ? 'Apply from the Drives tab' : 'Clear search'}
           </button>
         </div>
@@ -825,7 +940,7 @@ function ApplicationsView({ applications, query, onClearQuery }) {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[620px] text-left">
             <thead>
-              <tr className="text-[11px] font-semibold text-[#8a97a5]">
+              <tr className="text-sm font-semibold text-[#8a97a5]">
                 <th className="pb-3 font-semibold">Company</th>
                 <th className="pb-3 font-semibold">Role</th>
                 <th className="pb-3 font-semibold">Applied</th>
@@ -838,20 +953,20 @@ function ApplicationsView({ applications, query, onClearQuery }) {
                 <tr key={row._id} className="border-t border-[#f2f4f6]">
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-[11px] font-bold text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-sm font-bold text-white">
                         {initials(row.company)}
                       </span>
-                      <span className="text-xs font-bold text-[#0f172a]">{row.company || '—'}</span>
+                      <span className="text-sm font-bold text-[#0f172a]">{row.company || '—'}</span>
                     </div>
                   </td>
-                  <td className="py-3 text-xs text-[#5a6b7d]">{row.role || '—'}</td>
-                  <td className="py-3 text-xs text-[#5a6b7d]">{row.appliedDate || '—'}</td>
+                  <td className="py-3 text-sm text-[#5a6b7d]">{row.role || '—'}</td>
+                  <td className="py-3 text-sm text-[#5a6b7d]">{row.appliedDate || '—'}</td>
                   <td className="py-3">
-                    <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
+                    <span className={cn('rounded-full px-2.5 py-1 text-sm font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
                       {row.status || 'APPLIED'}
                     </span>
                   </td>
-                  <td className="py-3 text-right text-xs font-semibold text-[#0f172a]">
+                  <td className="py-3 text-right text-sm font-semibold text-[#0f172a]">
                     {row.salary ? formatMoney(String(row.salary).replace(/[^\d.]/g, '')) + ' LPA' : '—'}
                   </td>
                 </tr>
@@ -900,7 +1015,7 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
         >
           {PROFILE_FIELDS.map((field) => (
             <label key={field.name} className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#8a97a5]">
+              <span className="text-sm font-semibold uppercase tracking-wide text-[#8a97a5]">
                 {field.label}
               </span>
               <input
@@ -908,7 +1023,7 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
                 {...(field.numeric ? { min: 0, max: 10, step: '0.01' } : {})}
                 value={form[field.name]}
                 onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
-                className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-sm text-[#0f172a] outline-none focus:border-[#12a25a]"
+                className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
               />
             </label>
           ))}
@@ -916,14 +1031,14 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-[#0a7d45] px-6 py-2.5 text-xs font-bold text-white transition disabled:opacity-60"
+              className="rounded-full bg-[#0a7d45] px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-60"
             >
               {saving ? 'Saving…' : 'Save profile'}
             </button>
           </div>
         </form>
         {message && (
-          <p className="mt-4 rounded-2xl bg-[#e7f7ee] px-4 py-3 text-xs font-semibold text-[#0a7d45]">
+          <p className="mt-4 rounded-2xl bg-[#e7f7ee] px-4 py-3 text-sm font-semibold text-[#0a7d45]">
             {message}
           </p>
         )}
@@ -931,7 +1046,7 @@ function SettingsView({ user, profileDetails, onSave, saving, message }) {
 
       <div className={cn(CARD, 'p-5')}>
         <CardHead title="Account" sub="Read-only session details" />
-        <dl className="mt-4 flex flex-col gap-3 text-xs">
+        <dl className="mt-4 flex flex-col gap-3 text-sm">
           {[
             ['Email', user?.email],
             ['Role', user?.role],
@@ -1009,16 +1124,16 @@ function AdminView() {
         <div key={title} className={cn(CARD, 'p-5')}>
           <CardHead title={title} sub={`${rows.length} total`} />
           {rows.length === 0 ? (
-            <p className="mt-4 text-xs text-[#8a97a5]">None on record.</p>
+            <p className="mt-4 text-sm text-[#8a97a5]">None on record.</p>
           ) : (
             <ul className="mt-3 flex flex-col gap-2">
               {rows.slice(0, 8).map((row, i) => (
-                <li key={row._id || i} className="truncate rounded-xl bg-[#f1f4f6] px-3 py-2 text-xs text-[#0f172a]">
+                <li key={row._id || i} className="truncate rounded-xl bg-[#f1f4f6] px-3 py-2 text-sm text-[#0f172a]">
                   {render(row)}
                 </li>
               ))}
               {rows.length > 8 && (
-                <li className="text-[11px] font-semibold text-[#8a97a5]">+{rows.length - 8} more</li>
+                <li className="text-sm font-semibold text-[#8a97a5]">+{rows.length - 8} more</li>
               )}
             </ul>
           )}
@@ -1045,6 +1160,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState('overview');
   const [studentDoc, setStudentDoc] = useState(null);
   const [applying, setApplying] = useState(false);
+  const [applyDrive, setApplyDrive] = useState(null);
   const [applyNotice, setApplyNotice] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
@@ -1197,10 +1313,11 @@ export default function Dashboard() {
   const totalPlacements = analytics?.totalPlacements ?? 0;
   const firstName = String(user?.name || '').split(' ')[0] || 'there';
 
-  const onApply = async (drive) => {
+  const onApply = async (drive, extras = {}) => {
     setApplying(true);
     setApplyNotice('');
     const company = drive.companyId?.CompanyName || 'Company';
+    const resumeUrl = await fileToDataUrl(extras.resume);
     try {
       await axios.post(
         `${API_BASE}/student-api/apply`,
@@ -1221,14 +1338,16 @@ export default function Dashboard() {
           studentSkills: profileDetails?.skills || '',
           studentGithub: profileDetails?.github || '',
           studentLinkedin: profileDetails?.linkedin || '',
-          resumeUrl: '',
-          resumeName: '',
+          resumeUrl,
+          resumeName: extras.resume?.name || '',
+          studentNote: extras.note || '',
           status: 'APPLIED',
           appliedDate: new Date().toLocaleDateString(),
           appliedAt: new Date(),
         },
         { withCredentials: true },
       );
+      setApplyDrive(null);
       setApplyNotice(`Applied to ${company}.`);
       setTab('applications');
       load();
@@ -1265,7 +1384,7 @@ export default function Dashboard() {
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#12a25a] text-white">
               <Send size={16} />
             </span>
-            <span className="font-heading text-xl font-bold tracking-tight text-[#0a7d45]">Quixotic</span>
+            <span className="font-heading text-2xl font-bold tracking-tight text-[#0a7d45]">Quixotic</span>
           </Link>
 
           <nav className="flex flex-wrap gap-1.5 rounded-2xl border border-[#eceff2] bg-white p-1.5">
@@ -1276,7 +1395,7 @@ export default function Dashboard() {
                 onClick={() => setTab(key)}
                 aria-current={tab === key}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-2xl px-5 py-3 text-base font-bold transition',
+                  'flex items-center gap-2.5 rounded-2xl px-5 py-3 text-lg font-bold transition',
                   tab === key
                     ? 'bg-[#12a25a] text-white shadow-[0_2px_8px_rgba(18,162,90,0.25)]'
                     : 'text-[#5a6b7d] hover:bg-[#f3f5f7] hover:text-[#0f172a]',
@@ -1295,16 +1414,16 @@ export default function Dashboard() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search applications"
-                className="w-32 bg-transparent text-xs text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
+                className="w-32 bg-transparent text-sm text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
               />
             </label>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0a7d45] text-[11px] font-bold text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0a7d45] text-sm font-bold text-white">
               {initials(user?.name)}
             </span>
             <button
               type="button"
               onClick={async () => { await logout(); navigate('/login', { replace: true }); }}
-              className="flex items-center gap-1.5 rounded-full border border-[#eceff2] bg-white px-3 py-2 text-xs font-semibold text-[#5a6b7d] transition hover:border-[#fca5a5] hover:text-[#b42318]"
+              className="flex items-center gap-1.5 rounded-full border border-[#eceff2] bg-white px-3 py-2 text-sm font-semibold text-[#5a6b7d] transition hover:border-[#fca5a5] hover:text-[#b42318]"
             >
               <LogOut size={13} /> Logout
             </button>
@@ -1313,14 +1432,14 @@ export default function Dashboard() {
 
         {/* greeting */}
         <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold text-[#0f172a]">
+          <h1 className="text-4xl font-bold text-[#0f172a]">
             Welcome Back, <span className="text-[#98a4b2]">{firstName}</span>
           </h1>
           <div className="flex flex-wrap gap-3">
             <select
               value={rangeDays}
               onChange={(event) => setRangeDays(Number(event.target.value))}
-              className="rounded-full border border-[#eceff2] bg-white px-4 py-2.5 text-xs font-semibold text-[#5a6b7d]"
+              className="rounded-full border border-[#eceff2] bg-white px-4 py-2.5 text-sm font-semibold text-[#5a6b7d]"
             >
               {RANGES.map((range) => (
                 <option key={range.days} value={range.days}>{range.label}</option>
@@ -1329,7 +1448,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setTab('drives')}
-              className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-white px-4 py-2.5 text-xs font-semibold text-[#0f172a] transition hover:border-[#12a25a] hover:text-[#0a7d45]"
+              className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-white px-4 py-2.5 text-sm font-semibold text-[#0f172a] transition hover:border-[#12a25a] hover:text-[#0a7d45]"
             >
               <Plus size={14} /> Browse Drives
             </button>
@@ -1406,16 +1525,16 @@ export default function Dashboard() {
                   />
                   <div className="mt-4 rounded-3xl bg-gradient-to-br from-[#17a95f] to-[#0b7a43] p-5 text-white">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-bold italic tracking-tight">
+                      <span className="text-lg font-bold italic tracking-tight">
                         {isHR ? 'HR' : isStudent ? 'STUDENT' : 'FACULTY'}
                       </span>
                       <TrendingUp size={16} className="opacity-80" />
                     </div>
-                    <p className="mt-4 truncate text-xs opacity-80">
+                    <p className="mt-4 truncate text-sm opacity-80">
                       {profileDetails?.designation || user?.email || '—'}
                     </p>
-                    <p className="truncate text-2xl font-bold">{user?.name || '—'}</p>
-                    <div className="mt-5 grid grid-cols-2 gap-3 text-xs">
+                    <p className="truncate text-3xl font-bold">{user?.name || '—'}</p>
+                    <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <span className="block opacity-70">Branch</span>
                         <span className="font-bold">{branch || '—'}</span>
@@ -1440,12 +1559,12 @@ export default function Dashboard() {
 
                 <div className={cn(CARD, 'flex items-center justify-between gap-3 p-5')}>
                   <div>
-                    <p className="text-xs text-[#8a97a5]">Profile Completeness</p>
-                    <p className="text-2xl font-bold text-[#0f172a]">{completeness}%</p>
+                    <p className="text-sm text-[#8a97a5]">Profile Completeness</p>
+                    <p className="text-3xl font-bold text-[#0f172a]">{completeness}%</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-[#8a97a5]">Eligible Drives</p>
-                    <p className="text-2xl font-bold text-[#0a7d45]">{eligibleDrives.length}</p>
+                    <p className="text-sm text-[#8a97a5]">Eligible Drives</p>
+                    <p className="text-3xl font-bold text-[#0a7d45]">{eligibleDrives.length}</p>
                   </div>
                 </div>
               </div>
@@ -1472,7 +1591,7 @@ export default function Dashboard() {
                     action={<RoundAction><ArrowUpRight size={15} /></RoundAction>}
                   />
                   {closingSoon.length === 0 ? (
-                    <p className="mt-4 text-xs text-[#8a97a5]">
+                    <p className="mt-4 text-sm text-[#8a97a5]">
                       No drive closes in the next 30 days.
                     </p>
                   ) : (
@@ -1487,19 +1606,19 @@ export default function Dashboard() {
                             className="flex w-full items-center justify-between gap-3 text-left"
                           >
                             <span className="flex min-w-0 items-center gap-3">
-                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-[11px] font-bold text-white">
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-sm font-bold text-white">
                                 {initials(company)}
                               </span>
                               <span className="min-w-0">
-                                <span className="block truncate text-xs font-bold text-[#0f172a]">{company}</span>
-                                <span className="block truncate text-[10px] text-[#8a97a5]">
+                                <span className="block truncate text-sm font-bold text-[#0f172a]">{company}</span>
+                                <span className="block truncate text-sm text-[#8a97a5]">
                                   {drive.JobRole} · {drive.Package}
                                 </span>
                               </span>
                             </span>
                             <span
                               className={cn(
-                                'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                                'shrink-0 rounded-full px-2 py-0.5 text-sm font-bold',
                                 drive.daysLeft <= 7
                                   ? 'bg-[#fdecec] text-[#b42318]'
                                   : 'bg-[#e7f7ee] text-[#0a7d45]',
@@ -1521,7 +1640,7 @@ export default function Dashboard() {
                     action={<RoundAction><BarChart3 size={15} /></RoundAction>}
                   />
                   {Object.keys(analytics?.branchBreakdown || {}).length === 0 ? (
-                    <p className="mt-4 text-xs text-[#8a97a5]">
+                    <p className="mt-4 text-sm text-[#8a97a5]">
                       No branch data yet. Placements show up here once HR marks a candidate selected.
                     </p>
                   ) : (
@@ -1533,14 +1652,14 @@ export default function Dashboard() {
                         );
                         return (
                           <div key={name} className="flex items-center gap-3">
-                            <span className="w-12 shrink-0 text-[11px] font-semibold text-[#5a6b7d]">{name}</span>
+                            <span className="w-12 shrink-0 text-sm font-semibold text-[#5a6b7d]">{name}</span>
                             <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#f1f4f6]">
                               <span
                                 className="block h-full rounded-full bg-[#12a25a]"
                                 style={{ width: `${Math.round((Number(value) / max) * 100)}%` }}
                               />
                             </span>
-                            <span className="w-6 shrink-0 text-right text-[11px] font-bold text-[#0f172a]">{value}</span>
+                            <span className="w-6 shrink-0 text-right text-sm font-bold text-[#0f172a]">{value}</span>
                           </div>
                         );
                       })}
@@ -1566,7 +1685,7 @@ export default function Dashboard() {
                 applications={applications}
                 cgpa={cgpa}
                 branch={branch}
-                onApply={onApply}
+                onOpenApply={setApplyDrive}
                 applying={applying}
                 notice={applyNotice}
               />
@@ -1608,6 +1727,17 @@ export default function Dashboard() {
       >
         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
       </button>
+
+      {applyDrive && (
+        <ApplyModal
+          drive={applyDrive}
+          user={user}
+          profileDetails={profileDetails}
+          applying={applying}
+          onClose={() => setApplyDrive(null)}
+          onSubmit={(extras) => onApply(applyDrive, extras)}
+        />
+      )}
     </div>
   );
 }

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
  * This project is plain JSX (no TypeScript), so the registry's `.tsx` props
  * interface became a JSDoc block. Text sizes sit one step above the registry
  * default on purpose: the site's type scale is 0.8rem base (see index.css), so
- * the registry's `text-sm` renders at ~10px here.
+ * the registry's `text-base` renders at ~10px here.
  */
 
 function initialsOf(name) {
@@ -34,7 +34,7 @@ function Avatar({ name, avatarUrl, size = "h-12 w-12" }) {
         className={cn(
           "flex shrink-0 items-center justify-center rounded-full bg-[#0a7d45] font-bold text-white",
           size,
-          size.startsWith("h-12") ? "text-base" : "text-xs",
+          size.startsWith("h-12") ? "text-lg" : "text-sm",
         )}
       >
         {initialsOf(name)}
@@ -105,7 +105,10 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
       initial="hidden"
       animate="visible"
       className={cn(
-        "flex w-full max-w-lg flex-col rounded-3xl border border-[#eceff2] bg-white p-6 font-sans shadow-sm",
+        // Card ground is the dashboard's pale-blue wash (same hex as the
+        // overview's "eligible" chips) so drives read as a set, not as white
+        // boxes. Button green and the ink text both clear AA on it.
+        "flex w-full max-w-lg flex-col rounded-3xl border border-[#d7e3f7] bg-[#e8effd] p-6 font-sans shadow-sm transition hover:border-[#b9cfef]",
         className,
       )}
     >
@@ -114,8 +117,8 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
         <div className="flex items-center gap-3">
           <Avatar name={postedBy.name} avatarUrl={postedBy.avatarUrl} />
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-bold text-[#0f172a]">{postedBy.name}</h2>
-            <p className="truncate text-sm font-semibold text-[#0a7d45]">{role}</p>
+            <h2 className="truncate text-2xl font-bold text-[#0f172a]">{postedBy.name}</h2>
+            <p className="truncate text-base font-semibold text-[#0a7d45]">{role}</p>
           </div>
         </div>
         <Badge variant="success">{status}</Badge>
@@ -123,10 +126,10 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
 
       {/* package + the one number that decides whether to apply */}
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-        <p className="text-4xl font-bold tracking-tight text-[#0f172a]">{packageLabel}</p>
+        <p className="text-5xl font-bold tracking-tight text-[#0f172a]">{packageLabel}</p>
         <span
           className={cn(
-            "flex items-center gap-1.5 text-sm font-bold",
+            "flex items-center gap-1.5 text-base font-bold",
             eligible ? "text-[#0a7d45]" : "text-[#b42318]",
           )}
         >
@@ -135,7 +138,7 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
         </span>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-[#5a6b7d]">
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-base text-[#5a6b7d]">
         <div className="flex items-center gap-2">
           <CalendarDays className="size-4 shrink-0" />
           <span className="truncate">Closes {deadline}</span>
@@ -161,15 +164,15 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
       </div>
 
       {description && (
-        <p className="mt-4 text-sm leading-relaxed text-[#5a6b7d]">{description}</p>
+        <p className="mt-4 text-base leading-relaxed text-[#5a6b7d]">{description}</p>
       )}
 
       {/* recruiter */}
-      <div className="mt-5 flex items-center gap-3 border-t border-[#f1f4f6] pt-5">
+      <div className="mt-5 flex items-center gap-3 border-t border-[#d7e3f7] pt-5">
         <Avatar name={recruiter.name} avatarUrl={recruiter.avatarUrl} size="h-10 w-10" />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-[#0f172a]">{recruiter.name}</p>
-          <p className="truncate text-xs text-[#8a97a5]">
+          <p className="truncate text-base font-semibold text-[#0f172a]">{recruiter.name}</p>
+          <p className="truncate text-base text-[#5a6b7d]">
             {recruiter.company}
             {recruiter.location ? ` · ${recruiter.location}` : ""}
           </p>
@@ -183,14 +186,14 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
         <Button
           onClick={onApply}
           disabled={!eligible || applied || applying}
-          className="h-12 w-full rounded-full bg-[#0a7d45] px-6 text-base font-bold text-white hover:bg-[#12a25a]"
+          className="h-12 w-full rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white hover:bg-[#12a25a]"
         >
           {applied ? "Applied" : applying ? "Sending…" : "Apply now"}
         </Button>
         <Button
           onClick={onSave}
           variant="outline"
-          className="h-12 w-full rounded-full border-[#eceff2] px-6 text-base font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
+          className="h-12 w-full rounded-full border-[#eceff2] px-6 text-lg font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
         >
           {saved ? "Saved" : "Save for later"}
         </Button>
