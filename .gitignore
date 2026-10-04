@@ -10,6 +10,12 @@ dist-ssr/
 .env.*
 !.env.example
 
+# Markdown docs: session notes, handover, changelogs and deploy checklists are
+# working files for this machine, not part of the shipped product. README.md is
+# the exception — it is the repo's front door and stays tracked.
+*.md
+!README.md
+
 # Logs
 logs
 *.log
