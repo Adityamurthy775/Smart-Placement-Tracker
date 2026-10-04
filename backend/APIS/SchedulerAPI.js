@@ -1,11 +1,12 @@
 import exp from "express";
+import { verifyToken } from '../middleware/verifyToken.js';
 import { InterviewSlotModel } from "../modules/InterviewSlotModel.js";
 import { ApplicationModel } from "../modules/ApplicationModel.js";
 
 export const Schedulerapp = exp.Router();
 
 // HR defines available slots
-Schedulerapp.post("/slots", async (req, res) => {
+Schedulerapp.post("/slots", verifyToken("HR", "Admin"), async (req, res) => {
   try {
     const { driveId, hrId, startTime, endTime } = req.body;
     const slot = new InterviewSlotModel({ driveId, hrId, startTime, endTime });
@@ -27,7 +28,7 @@ Schedulerapp.get("/slots/:driveId", async (req, res) => {
 });
 
 // Student books a slot
-Schedulerapp.post("/book", async (req, res) => {
+Schedulerapp.post("/book", verifyToken("Student"), async (req, res) => {
   try {
     const { slotId, studentId, applicationId } = req.body;
     const slot = await InterviewSlotModel.findById(slotId);

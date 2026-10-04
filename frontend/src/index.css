@@ -120,11 +120,11 @@
      parseHex only accepts #rgb/#rrggbb, so every value here must be hex.
      --background drives its ramp: a light value flips it to dark ink on a
      pale ground automatically. */
-  --background: #ebf3ff;
-  --foreground: #071005;
-  --border: #c3d7ec;
-  --ns-muted: #5a6b7d;
-  --ns-accent: #ffc300;
+  --background: #ffffff;
+  --foreground: #120105;
+  --border: #000000;
+  --ns-muted: #000000;
+  --ns-accent: #fd0707;
   --chart-1: oklch(0.32 0 none);
   --chart-2: oklch(0.41 0 none);
   --chart-3: oklch(0.54 0 none);

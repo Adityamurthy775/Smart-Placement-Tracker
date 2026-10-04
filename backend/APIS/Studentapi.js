@@ -1,12 +1,17 @@
 import exp from 'express'
+import { verifyToken } from '../middleware/verifyToken.js';
 export const Studentapp=exp.Router();
 import { StudentModel } from '../modules/StudentModel.js';
 import { model } from 'mongoose';
 import { Schema } from 'mongoose';
 import { ApplicationModel } from '../modules/ApplicationModel.js';
+import mongoose from 'mongoose';
 import { InterviewSlotModel } from '../modules/InterviewSlotModel.js';
 
-Studentapp.post('/apply', async(req, res) => {
+Studentapp.post('/apply', verifyToken("Student"), async(req, res) => {
+  if (!req.body.driveid || !mongoose.isValidObjectId(req.body.driveid)) {
+    return res.status(400).json({ message: "A valid driveid is required" });
+  }
     try {
         const data = req.body;
         // data should contain studentid and driveid, plus student and drive preview details
@@ -18,7 +23,7 @@ Studentapp.post('/apply', async(req, res) => {
     }
 })
 
-Studentapp.get('/applications', async(req, res) => {
+Studentapp.get('/applications', verifyToken("Student", "HR", "Teacher", "Admin"), async(req, res) => {
     try {
         const { studentEmail, studentid, status, driveid } = req.query;
         const query = {};
@@ -33,7 +38,7 @@ Studentapp.get('/applications', async(req, res) => {
     }
 });
 
-Studentapp.patch('/applications/:id', async(req, res) => {
+Studentapp.patch('/applications/:id', verifyToken("HR", "Teacher", "Admin"), async(req, res) => {
     try {
         const updates = req.body;
         const application = await ApplicationModel.findById(req.params.id);
@@ -71,7 +76,7 @@ Studentapp.patch('/applications/:id', async(req, res) => {
     }
 });
 
-Studentapp.post('/student',async(req,res)=>{
+Studentapp.post('/student', verifyToken("Student"),async(req,res)=>{
     //get the data from the req
     let data=req.body
     let newdoc=new StudentModel(data)
@@ -81,14 +86,14 @@ Studentapp.post('/student',async(req,res)=>{
     res.status(201).json({message:"Student Created"})
 })
 
-Studentapp.get('/student',async(req,res)=>{
+Studentapp.get('/student', verifyToken("Student", "HR", "Teacher", "Admin"),async(req,res)=>{
     //find all students
     let result= await StudentModel.find()
     //send the res
     res.status(200).json({message:"Student details",payload:result})
 })
 
-Studentapp.get('/student/:id',async(req,res)=>{
+Studentapp.get('/student/:id', verifyToken("HR", "Teacher", "Admin"),async(req,res)=>{
     //get the id from the ulr
     let id=req.params.id
     //find the student by id
@@ -99,7 +104,7 @@ Studentapp.get('/student/:id',async(req,res)=>{
     res.status(200).json({message:"Student  found",payload:result})
 })
 
-Studentapp.put('/student/:id',async(req,res)=>{
+Studentapp.put('/student/:id', verifyToken("Student", "Admin"),async(req,res)=>{
     //get the id from the url
     let id=req.params.id
     //get the updated datafrom the req
@@ -113,7 +118,7 @@ Studentapp.put('/student/:id',async(req,res)=>{
     res.status(200).json({message:"Student Details are updated",payload:result})
 })
 
-Studentapp.delete('/student/:id',async(req,res)=>{
+Studentapp.delete('/student/:id', verifyToken("Admin"),async(req,res)=>{
     //get the id from the url
     let id=req.params.id
     //delete the studebnt by id
@@ -124,7 +129,7 @@ Studentapp.delete('/student/:id',async(req,res)=>{
     res.status(200).json({message:"Student deleted"})
 })
 
-Studentapp.patch('/student/:id',async(req,res)=>{
+Studentapp.patch('/student/:id', verifyToken("Student", "Admin"),async(req,res)=>{
     //get the id from the url
     const id=req.params.id
     //get the data from req

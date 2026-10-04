@@ -1,4 +1,5 @@
 import exp from 'express'
+import { verifyToken } from '../middleware/verifyToken.js';
 import { userModel} from '../modules/UserModel.js';
 import jwt from 'jsonwebtoken';
 import {hash,compare} from 'bcryptjs'
@@ -203,10 +204,9 @@ res.cookie("token", signtoken, authCookie(req))
 });
 
 //update profile settings
-userapp.post('/profile', async(req, res, next) => {
+userapp.post('/profile', verifyToken("Student", "Teacher", "HR", "Admin"), async(req, res, next) => {
   try {
     const {
-      userId,
       name,
       email,
       phone,
@@ -220,6 +220,9 @@ userapp.post('/profile', async(req, res, next) => {
       department,
       profileImage
     } = req.body;
+    // The id comes from the verified token, not the body: a student could
+    // otherwise POST someone else's userId and rewrite their profile.
+    const userId = req.user?.id || req.body.userId;
     if (!userId) {
       return res.status(400).json({ message: "User id is required" });
     }
@@ -260,7 +263,12 @@ userapp.post('/profile', async(req, res, next) => {
   }
 })
 
-//forgot password - verify email exists
+//forgot password - issues a short-lived signed reset token
+//
+// SECURITY: this used to be "does the email exist?" and /reset-password took a
+// bare {email, newPassword}. Anyone could then reset ANY account, admin
+// included. The token is now the authorisation: short-lived, purpose-tagged, and
+// checked against the email being reset.
 userapp.post('/forgot-password', async(req, res) => {
   try {
     const { email } = req.body;
@@ -268,16 +276,39 @@ userapp.post('/forgot-password', async(req, res) => {
     if (!user) {
       return res.status(404).json({ message: "No account found with this email" });
     }
-    res.status(200).json({ message: "Email verified. You can now reset your password." });
+    const resetToken = jwt.sign(
+      { email, purpose: 'password-reset' },
+      process.env.SECRET_KEY,
+      { expiresIn: '15m' },
+    );
+    res.status(200).json({
+      message: "Email verified. Use the reset token to set a new password.",
+      resetToken,
+    });
   } catch(err) {
     res.status(500).json({ message: err.message });
   }
 })
 
-//reset password
+//reset password - requires the token from /forgot-password
 userapp.post('/reset-password', async(req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const { email, newPassword, resetToken } = req.body;
+    if (!resetToken) {
+      return res.status(400).json({ message: "A reset token is required. Request one again." });
+    }
+    let payload;
+    try {
+      payload = jwt.verify(resetToken, process.env.SECRET_KEY);
+    } catch {
+      return res.status(401).json({ message: "Reset token is invalid or expired" });
+    }
+    if (payload.purpose !== 'password-reset' || payload.email !== email) {
+      return res.status(401).json({ message: "Reset token does not match this account" });
+    }
+    if (!newPassword || String(newPassword).length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });

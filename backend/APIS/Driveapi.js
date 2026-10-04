@@ -1,5 +1,7 @@
 import exp from 'express';
+import { verifyToken } from '../middleware/verifyToken.js';
 import { DriveModel } from '../modules/DriveModel.js';
+import mongoose from 'mongoose';
 import { CompanyModel } from '../modules/CompanyModel.js';
 import { compare } from 'bcryptjs';
 export const Driveapp=exp.Router();
@@ -10,7 +12,7 @@ const resolveCompanyByName = async (companyName) => {
 };
 
 
-Driveapp.post('/drive',async(req,res)=>{
+Driveapp.post('/drive', verifyToken("HR", "Admin"),async(req,res)=>{
   try {
     let { companyName, hrId, ...data } = req.body;
     
@@ -101,6 +103,10 @@ Driveapp.get('/drive/:name',async(req,res)=>{
 Driveapp.get('/drive/hr/:hrId', async (req, res) => {
   try {
     const { hrId } = req.params;
+    // A non-ObjectId id used to reach Mongo and come back as a 500 CastError.
+    if (!mongoose.isValidObjectId(hrId)) {
+      return res.status(400).json({ message: 'Invalid hrId' });
+    }
     const result = await DriveModel.find({ hrId }).populate('companyId');
     if (!result.length) {
       return res.status(404).json({ message: 'No drive is found' });
@@ -126,7 +132,7 @@ Driveapp.get('/drive/cgpa/:cgpa',async(req,res)=>{
 
 
 
-Driveapp.put('/drive/:id',async(req,res)=>{
+Driveapp.put('/drive/:id', verifyToken("HR", "Admin"),async(req,res)=>{
   //get the id and data from the req
   const id=req.params.id
   const updatedData=req.body
@@ -151,7 +157,7 @@ Driveapp.put('/drive/:id',async(req,res)=>{
 })
 
 
-Driveapp.patch('/drive/:id',async(req,res)=>{
+Driveapp.patch('/drive/:id', verifyToken("HR", "Admin"),async(req,res)=>{
   //get the data and the url from th req
   const id=req.params.id
   const data=req.body

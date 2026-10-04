@@ -1,10 +1,11 @@
 import exp from 'express'
+import { verifyToken } from '../middleware/verifyToken.js';
 import {TeacherModel} from '../modules/TeacherModel.js'
 export const Teacherapp=exp.Router();
 
 
 
-Teacherapp.post("/teacher",async(req,res)=>{
+Teacherapp.post("/teacher", verifyToken("Admin"),async(req,res)=>{
     //get the data from the req
     const data=req.body
     console.log(data)
@@ -37,7 +38,7 @@ Teacherapp.get('/teacher/:id',async(req,res)=>{
     res.status(200).json({message:"Tecaher info",payload:result})
 })
 
-Teacherapp.put('/teacher/:id',async(req,res)=>{
+Teacherapp.put('/teacher/:id', verifyToken("Admin"),async(req,res)=>{
     //get the id from the url
     const id=req.params.id
     //get the data from the body
@@ -51,7 +52,7 @@ Teacherapp.put('/teacher/:id',async(req,res)=>{
 })
 
 
-Teacherapp.delete('/teacher/:id',async(req,res)=>{
+Teacherapp.delete('/teacher/:id', verifyToken("Admin"),async(req,res)=>{
     //get the id from the url
     const id=req.params.id
     //find the teacher and delete
@@ -62,7 +63,7 @@ Teacherapp.delete('/teacher/:id',async(req,res)=>{
     res.status(200).json({message:"Teacher is deleted"})
 })
 
-Teacherapp.patch('/teacher/:id',async(req,res)=>{
+Teacherapp.patch('/teacher/:id', verifyToken("Admin"),async(req,res)=>{
     //get the id from the url
     const id=req.params.id
     //get the updated data from the body

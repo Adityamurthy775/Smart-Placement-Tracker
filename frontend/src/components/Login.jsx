@@ -19,18 +19,20 @@ function ForgotPasswordModal({ onClose }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [step, setStep] = useState('email'); // 'email' or 'reset'
   const [email, setEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [message, setMessage] = useState('');
 
+  // The backend issues a short-lived signed token and /reset-password refuses to
+  // run without it, so it has to be carried from this step to the next.
   const onEmailSubmit = async (data) => {
     setEmail(data.email);
+    setMessage('');
     try {
-      await axios.post(`${API_BASE}/user-api/forgot-password`, { email: data.email });
+      const res = await axios.post(`${API_BASE}/user-api/forgot-password`, { email: data.email });
+      setResetToken(res.data?.resetToken || '');
       setStep('reset');
-      setMessage('');
-    } catch {
-      // For demo, proceed anyway
-      setStep('reset');
-      setMessage('');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Could not start the password reset.');
     }
   };
 
@@ -39,10 +41,16 @@ function ForgotPasswordModal({ onClose }) {
       setMessage('Passwords do not match!');
       return;
     }
+    if (!resetToken) {
+      setMessage('Your reset request expired. Start again.');
+      setStep('email');
+      return;
+    }
     try {
-      await axios.post(`${API_BASE}/user-api/reset-password`, { 
-        email, 
-        newPassword: data.newPassword 
+      await axios.post(`${API_BASE}/user-api/reset-password`, {
+        email,
+        newPassword: data.newPassword,
+        resetToken,
       });
       setMessage('Password reset successfully! You can now login.');
       setTimeout(() => onClose(), 2000);

@@ -18,7 +18,7 @@ export default function Preloader({ onComplete }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] grid place-items-center bg-background transition-all duration-700 ${
+      className={`fixed inset-0 z-[9999] grid place-items-center bg-black transition-all duration-700 ${
         phase === "exit" ? "opacity-0 pointer-events-none scale-105" : "opacity-100"
       }`}
       aria-hidden="true"
@@ -28,7 +28,7 @@ export default function Preloader({ onComplete }) {
         {WORD.map((char, i) => (
           <span
             key={`${char}-${i}`}
-            className={`inline-block text-[clamp(3rem,10vw,7rem)] font-black leading-none tracking-tight text-foreground
+            className={`inline-block text-[clamp(3rem,10vw,7rem)] font-black leading-none tracking-tight text-white
               transition-all duration-700 ease-out
               ${phase === "enter" ? "animate-letter-in" : ""}
             `}

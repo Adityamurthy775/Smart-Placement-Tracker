@@ -4,7 +4,7 @@ import { verifyToken } from '../middleware/verifyToken.js';
 export const Companyapp=exp.Router();
 
 
-Companyapp.post('/company',async(requestAnimationFrame,res)=>{
+Companyapp.post('/company', verifyToken("HR", "Admin"),async(requestAnimationFrame,res)=>{
   //get the data from the body
   const data=requestAnimationFrame.body
   //create the doc

@@ -1,4 +1,5 @@
 import exp from 'express';
+import { verifyToken } from '../middleware/verifyToken.js';
 import { sendEmail } from '../modules/EmailService.js';
 
 export const notifyapp = exp.Router();
@@ -22,7 +23,7 @@ const statusMessages = {
 };
 
 // POST /notify-api/status-update
-notifyapp.post('/status-update', async (req, res) => {
+notifyapp.post('/status-update', verifyToken("HR", "Teacher", "Admin"), async (req, res) => {
   try {
     const { studentEmail, studentName, company, role, status, subject: customSubject, message: customMessage } = req.body;
 
