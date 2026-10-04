@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router';
 import {
   Bar, BarChart, CartesianGrid, Cell, Pie as RPie, PieChart as RPieChart,
-  Tooltip as RTooltip, XAxis as RXAxis, YAxis as RYAxis,
+  Tooltip as RTooltip, XAxis as RXAxis, YAxis as RYAxis, ResponsiveContainer,
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart } from '@/components/charts/area-chart';
@@ -11,6 +11,7 @@ import { Grid } from '@/components/charts/grid';
 import { XAxis } from '@/components/charts/x-axis';
 import { ChartTooltip as BklitChartTooltip } from '@/components/charts/tooltip';
 import { OpportunityCard } from '@/components/ui/card-12';
+import { StatusTimeline } from '@/components/ui/incident-status-timeline';
 import { UserContext } from '../contexts/UserContext';
 import { API_BASE, cn } from '@/lib/utils';
 import {
@@ -252,6 +253,18 @@ const formatMoney = (value) => {
   if (!Number.isFinite(n)) return String(value ?? '—');
   return n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 };
+
+// Seed rows and the schema disagree on field casing (Rollno vs rollno,
+// Deatils vs Details). Read through a fallback list so the admin roster prints
+// a value instead of "undefined".
+const pick = (row, ...keys) => {
+  for (const key of keys) {
+    const value = row?.[key];
+    if (value !== undefined && value !== null && String(value).trim() !== '') return String(value);
+  }
+  return '';
+};
+const studentName = (s) => pick(s?.Deatils, 'name', 'email') || pick(s, 'name', 'email') || 'Unnamed student';
 
 const initials = (name) =>
   String(name || '?')
@@ -514,7 +527,7 @@ const STATUS_COLOR = {
 /* ── Role analytics: student / HR / Admin all get different numbers ──────── */
 // One component, three bodies. The student view is the original three cards;
 // HR and Admin get panels built from numbers scoped to what they own.
-function AnalyticsSection({ role, counts, applications, successRate, hrStats, adminStats }) {
+function AnalyticsSection({ role, counts, applications, successRate, hrStats, adminStats, drives }) {
   const isHR = role === 'hr';
   const isAdmin = role === 'admin';
 
@@ -529,6 +542,21 @@ function AnalyticsSection({ role, counts, applications, successRate, hrStats, ad
     }
     return STATUSES.map((key) => ({ key, value: counts[key] }));
   }, [isHR, isAdmin, counts, hrStats, adminStats]);
+
+  // HR charts "applicants per drive", Admin charts "students per branch".
+  // Both are counts already in memory, so no extra request.
+  const barChart = useMemo(() => {
+    if (!isHR) return statusBars.map((row) => ({ name: row.key, value: row.value }));
+    return drives
+      .map((drive) => ({
+        name: drive.companyId?.CompanyName || drive.Title || 'Drive',
+        value: applications.filter(
+          (app) => String(app.driveid || app.driveId) === String(drive._id),
+        ).length,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [isHR, drives, applications, statusBars]);
 
   const maxBar = Math.max(...statusBars.map((row) => row.value), 1);
   const headline = isHR
@@ -599,6 +627,32 @@ function AnalyticsSection({ role, counts, applications, successRate, hrStats, ad
             </div>
           )}
         </div>
+
+        {/* HR: how many applicants each drive received. Admin: the same counts as
+            a bar chart instead of only the row list. */}
+        <div className={cn(CARD, 'p-5 xl:col-span-3')}>
+          <CardHead
+            title={isHR ? 'Applicants per drive' : 'Students per branch'}
+            sub={isHR ? 'Applications each of your drives received' : 'Roster distribution, charted'}
+          />
+          {barChart.length === 0 || barChart.every((row) => row.value === 0) ? (
+            <p className="mt-6 text-base text-[#8a97a5]">
+              {isHR ? 'No applicants yet. Post a drive to start collecting them.' : 'No students on the roster yet.'}
+            </p>
+          ) : (
+            <div className="mt-4 h-[260px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barChart} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#eceff2" strokeDasharray="4 6" />
+                  <RXAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#8a97a5' }} />
+                  <RYAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} tick={{ fontSize: 12, fill: '#8a97a5' }} />
+                  <RTooltip cursor={{ fill: 'rgba(18,162,90,0.06)' }} content={<ChartTooltipContent indicator="dot" />} />
+                  <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={56} fill="#12a25a" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
       </section>
     );
   }
@@ -630,7 +684,7 @@ function AnalyticsSection({ role, counts, applications, successRate, hrStats, ad
     <section className="mt-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-[#0f172a]">My Analytics</h2>
+          <h2 className="text-2xl font-bold text-[#0f172a]">{title}</h2>
           <p className="text-sm text-[#8a97a5]">Everything the Reports view computes, on this page</p>
         </div>
         <span className="rounded-full bg-[#e7f7ee] px-3 py-1.5 text-sm font-bold text-[#0a7d45]">
@@ -781,22 +835,21 @@ function DriveCreationModal({ companies, onClose, onCreate, creating }) {
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-[#5a6b7d]">Company</span>
-            <select
+            <span className="text-sm font-semibold text-[#5a6b7d]">Company name</span>
+            <input
+              type="text"
               value={form.companyId}
               onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+              placeholder="e.g. Google"
               className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
-            >
-              <option value="">Select a company</option>
-              {(companies || []).map((c) => (
-                <option key={c._id || c.CompanyId} value={c._id || c.CompanyId}>
-                  {c.CompanyName}
-                </option>
-              ))}
-            </select>
-            {(companies || []).length === 0 && (
-              <span className="text-sm text-[#8a6a00]">
-                No company on file — ask an admin to add one first.
+            />
+            {/* The drive API resolves the company by name, so free text is what it
+                wants. When the roster knows the name, say whether it matched. */}
+            {companies?.length > 0 && form.companyId && (
+              <span className="text-sm text-[#0a7d45]">
+                {companies.some((c) => String(c.CompanyName).toLowerCase() === form.companyId.trim().toLowerCase())
+                  ? `Matches ${form.companyId.trim()} on file.`
+                  : `No company named "${form.companyId.trim()}" on file — the drive will not link to one.`}
               </span>
             )}
           </label>
@@ -968,6 +1021,7 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
 
   return (
     <div className="flex flex-col gap-5">
+  return (
       <div className={cn(CARD, 'flex flex-wrap items-center justify-between gap-3 p-5')}>
         <div>
           <h2 className="text-2xl font-bold text-[#0f172a]">Available Drives</h2>
@@ -1184,6 +1238,40 @@ function ApplyModal({ drive, user, profileDetails, onClose, onSubmit, applying }
 }
 
 /* ── Applications tab ── */
+/* ── Applications tab ── */
+// An application's timeline is built from the status timestamps the API already
+// stores (appliedAt / shortlistedAt / interviewedAt / selectedAt / rejectedAt):
+// no extra fetch, and nothing to go stale.
+const TIMELINE_VARIANT = {
+  APPLIED: 'muted',
+  SHORTLISTED: 'info',
+  INTERVIEW: 'warning',
+  SELECTED: 'success',
+  REJECTED: 'danger',
+};
+
+const TIMELINE_STEPS = [
+  ['applied', 'Application submitted', ['appliedAt', 'appliedDate']],
+  ['shortlisted', 'Moved to the shortlist', ['shortlistedAt']],
+  ['interview', 'Interview scheduled', ['interviewedAt']],
+  ['selected', 'Offer received', ['selectedAt']],
+  ['rejected', 'Closed without an offer', ['rejectedAt']],
+];
+
+function timelineFor(app) {
+  return TIMELINE_STEPS.reduce((events, [status, message, fields]) => {
+    const raw = fields.map((f) => app?.[f]).find(Boolean);
+    const at = parseDate(raw);
+    if (!at) return events;
+    events.push({
+      status,
+      message: `${message} — ${app.role || 'role'} at ${app.company || 'company'}.`,
+      time: `${at.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`,
+    });
+    return events;
+  }, []);
+}
+
 function ApplicationsView({ applications, query, onClearQuery }) {
   const needle = query.trim().toLowerCase();
   const rows = useMemo(() => {
@@ -1200,15 +1288,28 @@ function ApplicationsView({ applications, query, onClearQuery }) {
   }, [applications, needle]);
 
   return (
-    <div className={cn(CARD, 'p-5')}>
-      <CardHead
-        title="My Applications"
-        sub={needle ? `${rows.length} matching "${needle}"` : `${rows.length} applications, newest first`}
-        action={<RoundAction><FileText size={15} /></RoundAction>}
-      />
+    <div className="flex flex-col gap-5">
+      <div className={cn(CARD, 'flex flex-wrap items-center justify-between gap-3 p-5')}>
+        <div>
+          <h2 className="text-2xl font-bold text-[#0f172a]">My Applications</h2>
+          <p className="text-base text-[#8a97a5]">
+            {needle ? rows.length + ' matching "' + needle + '"' : rows.length + ' applications, newest first'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {STATUSES.map((key) => (
+            <span
+              key={key}
+              className={cn('rounded-full px-3 py-1.5 text-sm font-bold', STATUS_STYLE[key] || 'bg-[#f1f4f6] text-[#5a6b7d]')}
+            >
+              {rows.filter((r) => r.status === key).length} {key}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-10 text-center">
+        <div className={cn(CARD, 'flex flex-col items-center gap-2 p-10 text-center')}>
           <p className="text-lg font-semibold text-[#0f172a]">
             {applications.length === 0 ? 'No applications yet' : 'No match for that search'}
           </p>
@@ -1217,42 +1318,43 @@ function ApplicationsView({ applications, query, onClearQuery }) {
           </button>
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[620px] text-left">
-            <thead>
-              <tr className="text-base font-semibold text-[#8a97a5]">
-                <th className="pb-3 font-semibold">Company</th>
-                <th className="pb-3 font-semibold">Role</th>
-                <th className="pb-3 font-semibold">Applied</th>
-                <th className="pb-3 font-semibold">Status</th>
-                <th className="pb-3 text-right font-semibold">Package</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row._id} className="border-t border-[#f2f4f6]">
-                  <td className="py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-base font-bold text-white">
-                        {initials(row.company)}
-                      </span>
-                      <span className="text-base font-bold text-[#0f172a]">{row.company || '—'}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 text-base text-[#5a6b7d]">{row.role || '—'}</td>
-                  <td className="py-3 text-base text-[#5a6b7d]">{row.appliedDate || '—'}</td>
-                  <td className="py-3">
-                    <span className={cn('rounded-full px-2.5 py-1 text-base font-bold', STATUS_STYLE[row.status] || STATUS_STYLE.APPLIED)}>
-                      {row.status || 'APPLIED'}
+        <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
+          {rows.map((row) => (
+            <div key={row._id} className="flex flex-col gap-3">
+              <div className={cn(CARD, 'flex items-center justify-between gap-3 p-4')}>
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-base font-bold text-white">
+                    {initials(row.company)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-lg font-bold text-[#0f172a]">{row.company || 'Company'}</span>
+                    <span className="block truncate text-base text-[#5a6b7d]">
+                      {row.role || 'Role'} · applied {row.appliedDate || '—'}
                     </span>
-                  </td>
-                  <td className="py-3 text-right text-base font-semibold text-[#0f172a]">
+                  </span>
+                </div>
+                <span className="shrink-0 text-right">
+                  <span className="block text-lg font-bold text-[#0f172a]">
                     {row.salary ? formatMoney(String(row.salary).replace(/[^\d.]/g, '')) + ' LPA' : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                  <span
+                    className={cn('mt-1 inline-block rounded-full px-2.5 py-0.5 text-sm font-bold', STATUS_STYLE[row.status] || 'bg-[#f1f4f6] text-[#5a6b7d]')}
+                  >
+                    {row.status || 'APPLIED'}
+                  </span>
+                </span>
+              </div>
+              <StatusTimeline
+                title={row.company || 'Application'}
+                subtitle={(row.role || 'Role') + ' · ' + (row.salary || 'package not set')}
+                statusLabel={row.status || 'APPLIED'}
+                statusVariant={TIMELINE_VARIANT[row.status] || 'muted'}
+                events={timelineFor(row)}
+                triggerLabel={'Status history'}
+                footer={row.resumeName ? 'Resume attached: ' + row.resumeName : 'No resume was attached to this application.'}
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -1392,7 +1494,7 @@ function AdminView() {
   if (status === 'error') return <ErrorPanel message={err} onRetry={() => setStatus('loading')} />;
 
   const columns = [
-    { title: 'Students', rows: data.students, render: (s) => `${s.Deatils?.name || 'Student'} · Roll ${s.Rollno} · ${s.Branch || '—'} · CGPA ${s.CGPA ?? '—'}` },
+    { title: 'Students', rows: data.students, render: (s) => [studentName(s), `roll ${pick(s, 'Rollno', 'rollno', 'Roll')}`, pick(s, 'Branch', 'branch'), pick(s, 'CGPA', 'cgpa') && `CGPA ${pick(s, 'CGPA', 'cgpa')}`].filter(Boolean).join(' · ') },
     { title: 'Companies', rows: data.companies, render: (c) => `${c.CompanyName || 'Company'} · ${c.Email || '—'}` },
     { title: 'Drives', rows: data.drives, render: (d) => `${d.companyId?.CompanyName || 'Drive'} · ${d.JobRole || '—'} · ${d.Package || '—'}` },
     { title: 'Teachers', rows: data.teachers, render: (t) => `${t.Deatils?.name || 'Teacher'} · ID ${t.Id || '—'} · ${t.department || '—'} · ${t.designation || '—'}` },
@@ -1440,6 +1542,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState('overview');
   const [studentDoc, setStudentDoc] = useState(null);
   const [adminData, setAdminData] = useState({ students: [], companies: [] });
+  const [companies, setCompanies] = useState([]);
   const [applying, setApplying] = useState(false);
   const [creating, setCreating] = useState(false);
   const [applyDrive, setApplyDrive] = useState(null);
@@ -1488,8 +1591,11 @@ export default function Dashboard() {
           safeGet(`${API_BASE}/admin-api/admin/company`, cfg, { payload: [] }),
         ]
       : null;
+    // HR posts drives, and the drive form names a company — it needs the list to
+    // say whether the typed name matches one. That GET is open to any session.
+    const companyList = safeGet(`${API_BASE}/company-api/company`, cfg, { payload: [] });
 
-    const [appsRes, drivesRes, analyticsRes, studentsRes, adminStudents, adminCompanies] = await Promise.all([
+    const [appsRes, drivesRes, analyticsRes, studentsRes, adminStudents, adminCompanies, companiesRes] = await Promise.all([
       safeGet(`${API_BASE}/student-api/applications`, { ...cfg, params }, { payload: [] }),
       safeGet(
         isHR ? `${API_BASE}/drive-api/drive/hr/${user.id}` : `${API_BASE}/drive-api/drive`,
@@ -1503,6 +1609,7 @@ export default function Dashboard() {
       safeGet(`${API_BASE}/student-api/student`, cfg, { payload: [] }),
       adminRequests?.[0] ?? Promise.resolve({ ok: true, data: { payload: [] } }),
       adminRequests?.[1] ?? Promise.resolve({ ok: true, data: { payload: [] } }),
+      companyList,
     ]);
 
     if (!appsRes.ok && !drivesRes.ok && !analyticsRes.ok) {
@@ -1522,6 +1629,7 @@ export default function Dashboard() {
         companies: Array.isArray(adminCompanies.data?.payload) ? adminCompanies.data.payload : [],
       });
     }
+    setCompanies(Array.isArray(companiesRes.data?.payload) ? companiesRes.data.payload : []);
     setLoading(false);
   }, [user, isHR, isStudent, isAdmin]);
 
@@ -1971,23 +2079,47 @@ export default function Dashboard() {
                     </p>
                     <p className="truncate text-3xl font-bold">{user?.name || '—'}</p>
                     <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="block opacity-70">Branch</span>
-                        <span className="font-bold">{branch || '—'}</span>
-                      </div>
-                      <div>
-                        <span className="block opacity-70">CGPA</span>
-                        <span className="font-bold">{cgpa || '—'}</span>
-                      </div>
+                      {/* CGPA and branch are student facts. HR and Admin see the
+                          numbers that describe their own work instead of two
+                          permanent em dashes. */}
+                      {isStudent ? (
+                        <>
+                          <div>
+                            <span className="block opacity-70">Branch</span>
+                            <span className="font-bold">{branch || 'Not set'}</span>
+                          </div>
+                          <div>
+                            <span className="block opacity-70">CGPA</span>
+                            <span className="font-bold">{cgpa || 'Not set'}</span>
+                          </div>
+                          <div>
+                            <span className="block opacity-70">Skills</span>
+                            <span className="font-bold">
+                              {String(profileDetails?.skills || '').split(',').filter((s) => s.trim()).length}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <span className="block opacity-70">{isHR ? 'Company' : 'Students'}</span>
+                            <span className="font-bold">
+                              {isHR ? profileDetails?.companyName || 'Not set' : adminStats.students}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="block opacity-70">{isHR ? 'Drives' : 'Companies'}</span>
+                            <span className="font-bold">{isHR ? hrStats.drives : adminStats.companies}</span>
+                          </div>
+                          <div>
+                            <span className="block opacity-70">{isHR ? 'Applicants' : 'Placed'}</span>
+                            <span className="font-bold">{isHR ? hrStats.applicants : adminStats.placed}</span>
+                          </div>
+                        </>
+                      )}
                       <div>
                         <span className="block opacity-70">Role</span>
                         <span className="font-bold">{user?.role || '—'}</span>
-                      </div>
-                      <div>
-                        <span className="block opacity-70">Skills</span>
-                        <span className="font-bold">
-                          {String(profileDetails?.skills || '').split(',').filter((s) => s.trim()).length}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -2126,7 +2258,7 @@ export default function Dashboard() {
                 creating={creating}
                 notice={applyNotice}
                 isHR={isHR}
-                companies={adminData.companies}
+                companies={companies}
                 onCreateDrive={createDrive}
               />
             ) : tab === 'applications' ? (
@@ -2143,6 +2275,7 @@ export default function Dashboard() {
                 successRate={successRate}
                 hrStats={hrStats}
                 adminStats={adminStats}
+                drives={drives}
               />
             ) : tab === 'notifications' ? (
               <NotificationsView events={feed} />
