@@ -122,6 +122,7 @@ async function seed() {
   const findDrive = (company) => drives.find((d) => named(d) === company.toLowerCase());
 
   /* 1. drives whose deadline lands inside the dashboard's 30-day window */
+  const demoHR = await userModel.findOne({ email: `hr@${DOMAIN}` });
   let created = 0;
   for (const [title, company, role, pkg, days, minCgpa] of UPCOMING_DRIVES) {
     const source = findDrive(company);
@@ -136,13 +137,13 @@ async function seed() {
       // of the next-30-days range and Closing Soon empties again.
       await DriveModel.updateOne(
         { _id: existing._id },
-        { $set: { LastDate: atDays(days), status: "UPCOMING", isActive: true } },
+        { $set: { LastDate: atDays(days), status: "UPCOMING", isActive: true, hrId: demoHR?._id } },
       );
       continue;
     }
     await DriveModel.create({
       companyId,
-      hrId: source.hrId,
+      hrId: demoHR?._id,
       Title: title,
       JobRole: role,
       Package: pkg,

@@ -6,9 +6,6 @@ import Login from './components/Login'
 import Register from './components/Register'
 import Preloader from './components/Preloader'
 
-// Route-level code split: chart.js / recharts / xlsx live in these two files
-// and are the bulk of the 1.17 MB bundle warning.
-const Mainpage = lazy(() => import('./components/Mainpage'))
 const Dashboard = lazy(() => import('./components/Dashboard'))
 
 function App() {
@@ -37,9 +34,6 @@ function App() {
           element:<Register/>
         }
       ]
-    },{
-          path:"/main-page",
-          element:<Mainpage/>
     },{
           path:"/dashboard",
           element:<Dashboard/>

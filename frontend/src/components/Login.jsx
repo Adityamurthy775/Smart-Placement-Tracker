@@ -11,7 +11,6 @@ import { API_BASE } from '../lib/utils';
 const DEMO_PASSWORD = 'Demo@12345';
 const DEMO_ACCOUNTS = [
   { role: 'Student', email: 'student@example.com' },
-  { role: 'Teacher', email: 'teacher@example.com' },
   { role: 'HR', email: 'hr@example.com' },
   { role: 'Admin', email: 'admin@example.com' },
 ];

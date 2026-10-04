@@ -133,18 +133,6 @@ function Register() {
               <label className="cursor-pointer group">
                 <input
                   type="radio"
-                  value="Teacher"
-                  className="peer sr-only"
-                  {...register('role')}
-                />
-                <span className="inline-flex items-center justify-center rounded-lg border border-secondary bg-card text-foreground px-3 py-2 transition hover:border-primary hover:bg-secondary/30 peer-checked:border-accent peer-checked:bg-accent peer-checked:text-accent-foreground">
-                  Teacher
-                </span>
-              </label>
-
-              <label className="cursor-pointer group">
-                <input
-                  type="radio"
                   value="HR"
                   className="peer sr-only"
                   {...register('role')}

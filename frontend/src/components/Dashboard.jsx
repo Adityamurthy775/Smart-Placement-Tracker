@@ -32,14 +32,6 @@ const ICON_BTN = 'flex h-9 w-9 items-center justify-center rounded-xl border bor
 
 // Tab ids, not routes: the dashboard keeps its shell (top bar + rail) and
 // swaps the content column, so no nav click leaves this page.
-const NAV = [
-  { key: 'overview', label: 'Dashboard', Icon: LayoutGrid },
-  { key: 'drives', label: 'Drives', Icon: Briefcase },
-  { key: 'applications', label: 'Applications', Icon: FileText },
-  { key: 'analytics', label: 'My Analytics', Icon: BarChart3 },
-  { key: 'settings', label: 'Settings', Icon: Settings },
-];
-
 const RANGES = [
   { days: 30, label: 'Last 30 days' },
   { days: 90, label: 'Last 90 days' },
@@ -519,7 +511,98 @@ const STATUS_COLOR = {
   REJECTED: '#e11d48',
 };
 
-function AnalyticsSection({ counts, applications, successRate }) {
+/* ── Role analytics: student / HR / Admin all get different numbers ──────── */
+// One component, three bodies. The student view is the original three cards;
+// HR and Admin get panels built from numbers scoped to what they own.
+function AnalyticsSection({ role, counts, applications, successRate, hrStats, adminStats }) {
+  const isHR = role === 'hr';
+  const isAdmin = role === 'admin';
+
+  const statusBars = useMemo(() => {
+    if (isHR) {
+      return STATUSES.map((key) => ({ key, value: hrStats.byStatus[key] }));
+    }
+    if (isAdmin) {
+      return Object.entries(adminStats.byBranch)
+        .map(([key, value]) => ({ key, value }))
+        .sort((a, b) => b.value - a.value);
+    }
+    return STATUSES.map((key) => ({ key, value: counts[key] }));
+  }, [isHR, isAdmin, counts, hrStats, adminStats]);
+
+  const maxBar = Math.max(...statusBars.map((row) => row.value), 1);
+  const headline = isHR
+    ? 'Your hiring pipeline'
+    : isAdmin
+      ? 'Campus placement overview'
+      : 'Everything the Reports view computes, on this page';
+  const title = isHR ? 'Hiring Analytics' : isAdmin ? 'Placement Analytics' : 'My Analytics';
+
+  if (isHR || isAdmin) {
+    const summary = isHR
+      ? [
+          { label: 'Drives posted', value: hrStats.drives },
+          { label: 'Applicants', value: hrStats.applicants },
+          { label: 'Offers made', value: hrStats.selected },
+          { label: 'Response rate', value: `${hrStats.responseRate}%` },
+          { label: 'Avg package', value: `${hrStats.avgPackage} LPA` },
+        ]
+      : [
+          { label: 'Students', value: adminStats.students },
+          { label: 'Companies', value: adminStats.companies },
+          { label: 'Drives', value: adminStats.drives },
+          { label: 'Applications', value: adminStats.applications },
+          { label: 'Placed', value: adminStats.placed },
+          { label: 'Placement rate', value: `${adminStats.placementRate}%` },
+          { label: 'Avg package', value: `${adminStats.avgPackage} LPA` },
+        ];
+    return (
+      <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <div className={cn(CARD, 'p-5 xl:col-span-1')}>
+          <CardHead title={title} sub={headline} />
+          <dl className="mt-4 flex flex-col gap-2.5">
+            {summary.map((row) => (
+              <div key={row.label} className="flex items-center justify-between rounded-2xl bg-[#f1f4f6] px-4 py-3">
+                <dt className="text-base text-[#5a6b7d]">{row.label}</dt>
+                <dd className="text-lg font-bold text-[#0f172a]">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className={cn(CARD, 'p-5 xl:col-span-2')}>
+          <CardHead
+            title={isHR ? 'Applications by status' : 'Students by branch'}
+            sub={isHR ? 'Across the drives you posted' : 'Roster distribution'}
+          />
+          {statusBars.every((row) => row.value === 0) ? (
+            <p className="mt-6 text-base text-[#8a97a5]">
+              {isHR ? 'No applications to your drives yet.' : 'No students on the roster yet.'}
+            </p>
+          ) : (
+            <div className="mt-4 flex flex-col gap-3">
+              {statusBars.map((row) => (
+                <div key={row.key} className="flex items-center gap-3">
+                  <span className="w-28 shrink-0 truncate text-base font-semibold text-[#5a6b7d]">
+                    {row.key}
+                  </span>
+                  <span className="h-3 flex-1 overflow-hidden rounded-full bg-[#f1f4f6]">
+                    <span
+                      className="block h-full rounded-full bg-[#12a25a]"
+                      style={{ width: `${Math.round((row.value / maxBar) * 100)}%` }}
+                    />
+                  </span>
+                  <span className="w-8 shrink-0 text-right text-base font-bold text-[#0f172a]">
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   const donut = STATUSES
     .map((status) => ({ status, value: counts[status] }))
     .filter((slice) => slice.value > 0);
@@ -655,6 +738,176 @@ function AnalyticsSection({ counts, applications, successRate }) {
   );
 }
 
+/* ── HR drive creation modal ── */
+const BRANCH_OPTIONS = ['CSE', 'ECE', 'EEE', 'AIML', 'DS', 'CS', 'ALL'];
+
+function DriveCreationModal({ companies, onClose, onCreate, creating }) {
+  const [form, setForm] = useState({
+    Title: '',
+    JobRole: '',
+    Package: '',
+    LastDate: '',
+    MinCGPA: '',
+    AllowedBranch: [],
+    companyId: '',
+    description: '',
+  });
+
+  const toggleBranch = (branch) => {
+    setForm((prev) => ({
+      ...prev,
+      AllowedBranch: prev.AllowedBranch.includes(branch)
+        ? prev.AllowedBranch.filter((b) => b !== branch)
+        : [...prev.AllowedBranch, branch],
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#0f172a]/55 p-4">
+      <div className="w-full max-w-xl rounded-3xl border border-[#eceff2] bg-white p-7">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-[#0f172a]">Create Drive</h2>
+            <p className="mt-1 text-base text-[#5a6b7d]">Post a new recruitment drive</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f1f4f6] text-lg text-[#5a6b7d] hover:bg-[#e8ecef]"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[#5a6b7d]">Company</span>
+            <select
+              value={form.companyId}
+              onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+              className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+            >
+              <option value="">Select a company</option>
+              {(companies || []).map((c) => (
+                <option key={c._id || c.CompanyId} value={c._id || c.CompanyId}>
+                  {c.CompanyName}
+                </option>
+              ))}
+            </select>
+            {(companies || []).length === 0 && (
+              <span className="text-sm text-[#8a6a00]">
+                No company on file — ask an admin to add one first.
+              </span>
+            )}
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[#5a6b7d]">Job Title</span>
+            <input
+              type="text"
+              value={form.Title}
+              onChange={(e) => setForm({ ...form, Title: e.target.value })}
+              placeholder="e.g. SDE Intern"
+              className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[#5a6b7d]">Job Role</span>
+            <input
+              type="text"
+              value={form.JobRole}
+              onChange={(e) => setForm({ ...form, JobRole: e.target.value })}
+              placeholder="e.g. Frontend Developer"
+              className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[#5a6b7d]">Package</span>
+            <input
+              type="text"
+              value={form.Package}
+              onChange={(e) => setForm({ ...form, Package: e.target.value })}
+              placeholder="e.g. 12 LPA"
+              className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[#5a6b7d]">Last Date</span>
+            <input
+              type="date"
+              value={form.LastDate}
+              onChange={(e) => setForm({ ...form, LastDate: e.target.value })}
+              className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[#5a6b7d]">Min CGPA</span>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="10"
+              value={form.MinCGPA}
+              onChange={(e) => setForm({ ...form, MinCGPA: e.target.value })}
+              placeholder="e.g. 7.5"
+              className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4">
+          <span className="text-sm font-semibold text-[#5a6b7d]">Allowed Branches</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {BRANCH_OPTIONS.map((branch) => (
+              <button
+                key={branch}
+                type="button"
+                onClick={() => toggleBranch(branch)}
+                className={cn(
+                  'rounded-full border px-3 py-1.5 text-sm font-semibold transition',
+                  form.AllowedBranch.includes(branch)
+                    ? 'border-[#0a7d45] bg-[#0a7d45] text-white'
+                    : 'border-[#eceff2] bg-[#fafbfc] text-[#5a6b7d]',
+                )}
+              >
+                {branch}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="mt-4 flex flex-col gap-1.5">
+          <span className="text-sm font-semibold text-[#5a6b7d]">Description</span>
+          <textarea
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Brief description of the role"
+            className="w-full resize-none rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
+          />
+        </label>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-full border border-[#eceff2] px-6 text-lg font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={creating}
+            onClick={() => onCreate(form)}
+            className="h-12 rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white transition hover:bg-[#12a25a] disabled:opacity-60"
+          >
+            {creating ? 'Creating…' : 'Create Drive'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Drives tab ── */
 function driveEligibility(drive, cgpa, branch) {
   const allowed = Array.isArray(drive.AllowedBranch)
@@ -669,9 +922,16 @@ function driveEligibility(drive, cgpa, branch) {
   return open && cgpaOk && branchOk;
 }
 
-function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying, notice }) {
+function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying, notice, isHR, companies, onCreateDrive, creating }) {
   const [q, setQ] = useState('');
-  // "Save for later" — a list of drive ids in localStorage, so it survives the
+  const [showCreate, setShowCreate] = useState(false);
+  // The page owns the submit (it holds `creating` and the API call), so the
+  // modal closes here the moment the request settles — success or failure.
+  const wasCreating = useRef(false);
+  useEffect(() => {
+    if (wasCreating.current && !creating) setShowCreate(false);
+    wasCreating.current = creating;
+  }, [creating]);
   // tab without asking the backend for a table it does not have.
   const [saved, setSaved] = useState(() => {
     try {
@@ -713,15 +973,26 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
           <h2 className="text-2xl font-bold text-[#0f172a]">Available Drives</h2>
           <p className="text-sm text-[#8a97a5]">{rows.length} of {drives.length} drives</p>
         </div>
-        <label className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5">
-          <Search size={14} className="text-[#8a97a5]" />
-          <input
-            value={q}
-            onChange={(event) => setQ(event.target.value)}
-            placeholder="Search company, role or package"
-            className="w-56 bg-transparent text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
-          />
-        </label>
+        <div className="flex items-center gap-3">
+          {isHR && (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 rounded-full bg-[#0a7d45] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#12a25a]"
+            >
+              <Plus size={14} /> Create Drive
+            </button>
+          )}
+          <label className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5">
+            <Search size={14} className="text-[#8a97a5]" />
+            <input
+              value={q}
+              onChange={(event) => setQ(event.target.value)}
+              placeholder="Search company, role or package"
+              className="w-56 bg-transparent text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
+            />
+          </label>
+        </div>
       </div>
 
       {notice && (
@@ -794,6 +1065,15 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
             );
           })}
         </div>
+      )}
+
+      {showCreate && (
+        <DriveCreationModal
+          companies={companies}
+          onClose={() => setShowCreate(false)}
+          onCreate={onCreateDrive}
+          creating={creating}
+        />
       )}
     </div>
   );
@@ -1075,14 +1355,14 @@ function AdminView() {
     let cancelled = false;
     (async () => {
       const cfg = { withCredentials: true };
-      const [students, teachers, companies, drives] = await Promise.all([
+      const [students, companies, drives, teachers] = await Promise.all([
         safeGet(`${API_BASE}/admin-api/admin/student`, cfg, { payload: [] }),
-        safeGet(`${API_BASE}/admin-api/admin/teacher`, cfg, { payload: [] }),
         safeGet(`${API_BASE}/admin-api/admin/company`, cfg, { payload: [] }),
         safeGet(`${API_BASE}/admin-api/admin/drive`, cfg, { payload: [] }),
+        safeGet(`${API_BASE}/admin-api/admin/teacher`, cfg, { payload: [] }),
       ]);
       if (cancelled) return;
-      const failed = [students, teachers, companies, drives].filter((r) => !r.ok).length;
+      const failed = [students, companies, drives, teachers].filter((r) => !r.ok).length;
       if (failed === 4) {
         setErr('Admin API unreachable. Is the backend running?');
         setStatus('error');
@@ -1090,9 +1370,9 @@ function AdminView() {
       }
       setData({
         students: students.data.payload || [],
-        teachers: teachers.data.payload || [],
         companies: companies.data.payload || [],
         drives: drives.data.payload || [],
+        teachers: teachers.data.payload || [],
       });
       setStatus('ready');
     })();
@@ -1113,9 +1393,9 @@ function AdminView() {
 
   const columns = [
     { title: 'Students', rows: data.students, render: (s) => `${s.Deatils?.name || 'Student'} · Roll ${s.Rollno} · ${s.Branch || '—'} · CGPA ${s.CGPA ?? '—'}` },
-    { title: 'Teachers', rows: data.teachers, render: (t) => `${t.Deatils?.name || 'Teacher'} · ${t.designation || '—'} · ${t.department || '—'}` },
     { title: 'Companies', rows: data.companies, render: (c) => `${c.CompanyName || 'Company'} · ${c.Email || '—'}` },
     { title: 'Drives', rows: data.drives, render: (d) => `${d.companyId?.CompanyName || 'Drive'} · ${d.JobRole || '—'} · ${d.Package || '—'}` },
+    { title: 'Teachers', rows: data.teachers, render: (t) => `${t.Deatils?.name || 'Teacher'} · ID ${t.Id || '—'} · ${t.department || '—'} · ${t.designation || '—'}` },
   ];
 
   return (
@@ -1159,7 +1439,9 @@ export default function Dashboard() {
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [tab, setTab] = useState('overview');
   const [studentDoc, setStudentDoc] = useState(null);
+  const [adminData, setAdminData] = useState({ students: [], companies: [] });
   const [applying, setApplying] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [applyDrive, setApplyDrive] = useState(null);
   const [applyNotice, setApplyNotice] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
@@ -1167,18 +1449,29 @@ export default function Dashboard() {
 
   const role = String(user?.role || '').toLowerCase();
   const isHR = role === 'hr';
-  const isStudent = role === 'student';
+  const isStudent = role === 'student' || role === 'teacher';
   const isAdmin = role === 'admin';
 
-  // Everyone gets Notifications; Admin additionally gets the roster panel.
-  const navItems = useMemo(
-    () => [
-      ...NAV,
-      { key: 'notifications', label: 'Notifications', Icon: Bell },
-      ...(isAdmin ? [{ key: 'admin', label: 'Admin', Icon: ShieldCheck }] : []),
-    ],
-    [isAdmin],
-  );
+  // Role-based nav. HR and Admin do not get an Applications tab: applications
+  // are the HR's pipeline (seen per drive) and the Admin's roster, not a list
+  // they own. Teacher has no UI at all — see the guard at the bottom.
+  const navItems = useMemo(() => {
+    const base = [
+      { key: 'overview', label: 'Dashboard', Icon: LayoutGrid },
+      { key: 'drives', label: 'Drives', Icon: Briefcase },
+    ];
+    const analytics = {
+      key: 'analytics',
+      label: isStudent ? 'My Analytics' : 'Analytics',
+      Icon: BarChart3,
+    };
+    const notifications = { key: 'notifications', label: 'Notifications', Icon: Bell };
+    const settings = { key: 'settings', label: 'Settings', Icon: Settings };
+    const admin = { key: 'admin', label: 'Admin', Icon: ShieldCheck };
+    if (isHR) return [...base, analytics, notifications, settings];
+    if (isAdmin) return [...base, analytics, notifications, admin, settings];
+    return [...base, { key: 'applications', label: 'Applications', Icon: FileText }, analytics, notifications, settings];
+  }, [isHR, isAdmin, isStudent]);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -1187,7 +1480,16 @@ export default function Dashboard() {
     const cfg = { withCredentials: true };
     const params = isStudent && user.email ? { studentEmail: user.email } : {};
 
-    const [appsRes, drivesRes, analyticsRes, studentsRes] = await Promise.all([
+    // Admin gets the campus roster; HR and students do not need it and the
+    // endpoints are Admin-only, so asking would just 403.
+    const adminRequests = isAdmin
+      ? [
+          safeGet(`${API_BASE}/admin-api/admin/student`, cfg, { payload: [] }),
+          safeGet(`${API_BASE}/admin-api/admin/company`, cfg, { payload: [] }),
+        ]
+      : null;
+
+    const [appsRes, drivesRes, analyticsRes, studentsRes, adminStudents, adminCompanies] = await Promise.all([
       safeGet(`${API_BASE}/student-api/applications`, { ...cfg, params }, { payload: [] }),
       safeGet(
         isHR ? `${API_BASE}/drive-api/drive/hr/${user.id}` : `${API_BASE}/drive-api/drive`,
@@ -1199,6 +1501,8 @@ export default function Dashboard() {
       // /student-api/student/:id filters on Rollno and there is no "me"
       // endpoint, so the (small) roster is filtered client side.
       safeGet(`${API_BASE}/student-api/student`, cfg, { payload: [] }),
+      adminRequests?.[0] ?? Promise.resolve({ ok: true, data: { payload: [] } }),
+      adminRequests?.[1] ?? Promise.resolve({ ok: true, data: { payload: [] } }),
     ]);
 
     if (!appsRes.ok && !drivesRes.ok && !analyticsRes.ok) {
@@ -1212,8 +1516,14 @@ export default function Dashboard() {
     setAnalytics(analyticsRes.data?.payload || null);
     const roster = Array.isArray(studentsRes.data?.payload) ? studentsRes.data.payload : [];
     setStudentDoc(roster.find((s) => String(s.Deatils) === String(user.id)) || null);
+    if (isAdmin) {
+      setAdminData({
+        students: Array.isArray(adminStudents.data?.payload) ? adminStudents.data.payload : [],
+        companies: Array.isArray(adminCompanies.data?.payload) ? adminCompanies.data.payload : [],
+      });
+    }
     setLoading(false);
-  }, [user, isHR, isStudent]);
+  }, [user, isHR, isStudent, isAdmin]);
 
   // Deferred one tick: `load` flips `loading` synchronously, and calling it
   // straight from the effect body is what react-hooks/set-state-in-effect
@@ -1311,6 +1621,61 @@ export default function Dashboard() {
 
   const avgPackage = analytics?.avgPackage ?? 0;
   const totalPlacements = analytics?.totalPlacements ?? 0;
+
+  // HR numbers are scoped to the HR's own drives, computed from what is already
+  // loaded — /analytics-api/dashboard is campus-wide and would be wrong here.
+  const hrStats = useMemo(() => {
+    const driveIds = new Set(drives.map((d) => String(d._id)));
+    const mine = applications.filter((app) => driveIds.has(String(app.driveid || app.driveId)));
+    const byStatus = STATUSES.reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
+    mine.forEach((app) => {
+      if (byStatus[app.status] !== undefined) byStatus[app.status] += 1;
+    });
+    const packages = drives
+      .map((d) => Number(String(d.Package || '').match(/(\d+(\.\d+)?)/)?.[1]))
+      .filter((n) => Number.isFinite(n));
+    const decided = mine.filter((app) => app.status !== 'APPLIED').length;
+    return {
+      drives: drives.length,
+      activeDrives: drives.filter((d) => d.isActive).length,
+      applicants: mine.length,
+      shortlisted: byStatus.SHORTLISTED,
+      interviews: byStatus.INTERVIEW,
+      selected: byStatus.SELECTED,
+      rejected: byStatus.REJECTED,
+      avgPackage: packages.length
+        ? (packages.reduce((a, b) => a + b, 0) / packages.length).toFixed(1)
+        : 0,
+      responseRate: mine.length ? Math.round((decided / mine.length) * 100) : 0,
+      byStatus,
+    };
+  }, [drives, applications]);
+
+  // Admin numbers are campus-wide and come from the Admin-only roster endpoints
+  // plus the campus analytics endpoint.
+  const adminStats = useMemo(() => {
+    const students = adminData.students;
+    const placed = students.filter((s) => {
+      const id = s._id || s.id;
+      return applications.some((app) => String(app.studentid) === String(id) && app.status === 'SELECTED');
+    }).length;
+    const byBranch = students.reduce((acc, s) => {
+      const key = s.Branch || 'Unspecified';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return {
+      students: students.length,
+      companies: adminData.companies.length,
+      activeCompanies: adminData.companies.filter((c) => c.isActive).length,
+      drives: drives.length,
+      applications: applications.length,
+      placed,
+      avgPackage,
+      placementRate: students.length ? Math.round((placed / students.length) * 100) : 0,
+      byBranch,
+    };
+  }, [adminData, drives, applications, avgPackage]);
   const firstName = String(user?.name || '').split(' ')[0] || 'there';
 
   const onApply = async (drive, extras = {}) => {
@@ -1367,6 +1732,29 @@ export default function Dashboard() {
     setProfileMsg(result.success ? 'Profile saved.' : result.error);
     setSavingProfile(false);
   };
+
+  const createDrive = async (form) => {
+    setCreating(true);
+    try {
+      await axios.post(
+        `${API_BASE}/drive-api/drive`,
+        {
+          ...form,
+          hrId: user.id,
+          isActive: true,
+          status: 'UPCOMING',
+        },
+        { withCredentials: true },
+      );
+      setApplyNotice('Drive created.');
+      load();
+    } catch (error) {
+      setApplyNotice(`Could not create drive: ${error.response?.data?.message || 'server error'}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const totalApplications = applications.length;
   const successRate = totalApplications
     ? Math.round((counts.SELECTED / totalApplications) * 100)
@@ -1374,6 +1762,29 @@ export default function Dashboard() {
 
 
   if (authTimedOut && !user) return null;
+
+  // Teacher was retired: no tab, no panel, no data. Say so plainly instead of
+  // dropping a teacher into the student dashboard.
+  if (role === 'teacher') {
+    return (
+      <div className="min-h-screen p-4 sm:p-8" style={{ backgroundColor: PAGE_BG }}>
+        <div className="mx-auto max-w-xl rounded-[32px] p-10 text-center" style={{ backgroundColor: PANEL_BG }}>
+          <h1 className="text-3xl font-bold text-[#0f172a]">Teacher accounts are retired</h1>
+          <p className="mt-3 text-lg text-[#5a6b7d]">
+            The teacher role has been removed from this build. Sign in with a student,
+            HR or admin account, or sign up for one.
+          </p>
+          <button
+            type="button"
+            onClick={async () => { await logout(); navigate('/login', { replace: true }); }}
+            className="mt-6 h-12 rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white hover:bg-[#12a25a]"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 sm:p-8" style={{ backgroundColor: PAGE_BG }}>
@@ -1458,14 +1869,36 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* student KPI cards */}
+        {/* KPI cards — what each role actually owns */}
         <div className="mt-5 flex flex-wrap gap-4">
-          <KpiCard label="Applications" value={loading ? '—' : applications.length} hint="All time" />
-          <KpiCard label="Shortlisted" value={loading ? '—' : counts.SHORTLISTED} hint="Moved forward" tone="plain" />
-          <KpiCard label="Interviews" value={loading ? '—' : counts.INTERVIEW} hint="In progress" tone="plain" />
-          <KpiCard label="Offers" value={loading ? '—' : counts.SELECTED} hint="Offers received" tone="good" />
-          <KpiCard label="Rejected" value={loading ? '—' : counts.REJECTED} hint="Not selected" tone="warn" />
-          <KpiCard label="Avg Package" value={loading ? '—' : `${avgPackage} LPA`} hint={`${totalPlacements} placed`} tone="good" />
+          {isAdmin ? (
+            <>
+              <KpiCard label="Students" value={loading ? '—' : adminStats.students} hint="On the roster" />
+              <KpiCard label="Companies" value={loading ? '—' : adminStats.companies} hint={`${adminStats.activeCompanies} active`} />
+              <KpiCard label="Drives" value={loading ? '—' : adminStats.drives} hint="All campus" />
+              <KpiCard label="Applications" value={loading ? '—' : adminStats.applications} hint="All time" />
+              <KpiCard label="Placed" value={loading ? '—' : adminStats.placed} hint={`${adminStats.placementRate}% of students`} tone="good" />
+              <KpiCard label="Avg Package" value={loading ? '—' : `${avgPackage} LPA`} hint="Campus average" tone="good" />
+            </>
+          ) : isHR ? (
+            <>
+              <KpiCard label="My Drives" value={loading ? '—' : hrStats.drives} hint={`${hrStats.activeDrives} active`} />
+              <KpiCard label="Applicants" value={loading ? '—' : hrStats.applicants} hint="Across my drives" />
+              <KpiCard label="Shortlisted" value={loading ? '—' : hrStats.shortlisted} hint="Moved forward" tone="plain" />
+              <KpiCard label="Interviews" value={loading ? '—' : hrStats.interviews} hint="In progress" tone="plain" />
+              <KpiCard label="Offers Made" value={loading ? '—' : hrStats.selected} hint="Candidates selected" tone="good" />
+              <KpiCard label="Avg Package" value={loading ? '—' : `${hrStats.avgPackage} LPA`} hint={`${hrStats.responseRate}% responded`} tone="good" />
+            </>
+          ) : (
+            <>
+              <KpiCard label="Applications" value={loading ? '—' : applications.length} hint="All time" />
+              <KpiCard label="Shortlisted" value={loading ? '—' : counts.SHORTLISTED} hint="Moved forward" tone="plain" />
+              <KpiCard label="Interviews" value={loading ? '—' : counts.INTERVIEW} hint="In progress" tone="plain" />
+              <KpiCard label="Offers" value={loading ? '—' : counts.SELECTED} hint="Offers received" tone="good" />
+              <KpiCard label="Rejected" value={loading ? '—' : counts.REJECTED} hint="Not selected" tone="warn" />
+              <KpiCard label="Avg Package" value={loading ? '—' : `${avgPackage} LPA`} hint={`${totalPlacements} placed`} tone="good" />
+            </>
+          )}
         </div>
 
         {error && <div className="mt-5"><ErrorPanel message={error} onRetry={load} /></div>}
@@ -1529,7 +1962,7 @@ export default function Dashboard() {
                   <div className="mt-4 rounded-3xl bg-gradient-to-br from-[#17a95f] to-[#0b7a43] p-5 text-white">
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold italic tracking-tight">
-                        {isHR ? 'HR' : isStudent ? 'STUDENT' : 'FACULTY'}
+                        {isHR ? 'HR' : isAdmin ? 'ADMIN' : 'STUDENT'}
                       </span>
                       <TrendingUp size={16} className="opacity-80" />
                     </div>
@@ -1690,7 +2123,11 @@ export default function Dashboard() {
                 branch={branch}
                 onOpenApply={setApplyDrive}
                 applying={applying}
+                creating={creating}
                 notice={applyNotice}
+                isHR={isHR}
+                companies={adminData.companies}
+                onCreateDrive={createDrive}
               />
             ) : tab === 'applications' ? (
               <ApplicationsView
@@ -1700,9 +2137,12 @@ export default function Dashboard() {
               />
             ) : tab === 'analytics' ? (
               <AnalyticsSection
+                role={role}
                 counts={counts}
                 applications={applications}
                 successRate={successRate}
+                hrStats={hrStats}
+                adminStats={adminStats}
               />
             ) : tab === 'notifications' ? (
               <NotificationsView events={feed} />
