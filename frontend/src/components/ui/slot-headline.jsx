@@ -130,24 +130,42 @@ export function SlotLoader({
   items = SLOT_ITEMS,
   compact = false,
   className,
+  onDark = false,
 }) {
   /* Text here is Text, and the rotating words are Text too. The old build
      passed SLOT_ITEMS' hardcoded hexes (#ef4444, #22c55e, …) straight through
      as inline `color`, which is both off-palette and unreadable on the light
      preloader: red on #ebf3ff is ~3.6:1. Overriding every item to Text keeps
-     the rotation legible, and the Primary mark is the only colour. */
-  const textItems = items.map((item) => ({ ...item, color: "#071005" }));
+     the rotation legible, and the Primary mark is the only colour.
+
+     `onDark` flips the whole set to white for callers that sit on a dark
+     ground (the preloader overlay). The rotating rows are coloured with an
+     inline `style`, so a className on the wrapper cannot reach them — the
+     ink has to be swapped here, not outside. */
+  const ink = onDark ? "#ffffff" : "#071005";
+  const textItems = items.map((item) => ({ ...item, color: ink }));
 
   return (
-    <div className={`flex flex-col items-center gap-2 ${compact ? "text-sm" : "text-base"} text-foreground ${className || ""}`} role="status">
+    <div
+      className={`flex flex-col items-center gap-2 ${compact ? "text-sm" : "text-base"} ${
+        onDark ? "text-white" : "text-foreground"
+      } ${className || ""}`}
+      role="status"
+    >
       <SlotHeadline
         as="div"
         prefix={message}
-        items={[{ name: "matches", icon: BsLightning, color: "#071005" }, ...textItems]}
-        badgeClassName="bg-secondary/40 text-foreground"
-        iconClassName="text-primary"
+        items={[{ name: "matches", icon: BsLightning, color: ink }, ...textItems]}
+        badgeClassName={onDark ? "bg-white/15 text-white" : "bg-secondary/40 text-foreground"}
+        iconClassName={onDark ? "text-white" : "text-primary"}
       />
-      <p className="text-xs text-muted-foreground font-mono tracking-wider uppercase">{help}</p>
+      <p
+        className={`text-xs font-mono tracking-wider uppercase ${
+          onDark ? "text-white/70" : "text-muted-foreground"
+        }`}
+      >
+        {help}
+      </p>
     </div>
   );
 }

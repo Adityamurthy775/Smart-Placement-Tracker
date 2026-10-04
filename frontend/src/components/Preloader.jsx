@@ -43,10 +43,14 @@ export default function Preloader({ onComplete }) {
       <div className={`absolute bottom-20 left-1/2 -translate-x-1/2 transition-opacity duration-500 ${
         phase === "enter" ? "opacity-0" : "opacity-100"
       }`}>
+        {/* Slot loader. `onDark` puts the copy, the rotating words, the bolt
+            mark and the badge on white — the default Text ink is near-black
+            and all but vanished against the black overlay. */}
         <SlotLoader
           message="Loading your"
           help="Track. Manage. Get placed."
           compact
+          onDark
         />
       </div>
 
