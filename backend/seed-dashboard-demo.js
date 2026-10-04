@@ -124,6 +124,12 @@ async function seed() {
   /* 1. drives whose deadline lands inside the dashboard's 30-day window */
   const demoHR = await userModel.findOne({ email: `hr@${DOMAIN}` });
   let created = 0;
+  // The demo drives this HR owns, keyed by company. Applications are attached to
+  // these specifically: `findDrive(company)` returns the FIRST drive for a
+  // company, which is a pre-existing drive owned by somebody else — HR's stats
+  // scope to `hrId`, so applications landing there showed up nowhere on the HR
+  // dashboard and every chart read zero.
+  const demoDrives = new Map();
   for (const [title, company, role, pkg, days, minCgpa] of UPCOMING_DRIVES) {
     const source = findDrive(company);
     if (!source) {
@@ -139,9 +145,10 @@ async function seed() {
         { _id: existing._id },
         { $set: { LastDate: atDays(days), status: "UPCOMING", isActive: true, hrId: demoHR?._id } },
       );
+      demoDrives.set(company.toLowerCase(), await DriveModel.findById(existing._id));
       continue;
     }
-    await DriveModel.create({
+    const made = await DriveModel.create({
       companyId,
       hrId: demoHR?._id,
       Title: title,
@@ -154,9 +161,11 @@ async function seed() {
       description: "Seeded by seed-dashboard-demo.js for the dashboard demo.",
       isActive: true,
     });
+    demoDrives.set(company.toLowerCase(), made);
     created += 1;
   }
   console.log(`  drives: ${created} created, ${UPCOMING_DRIVES.length - created} refreshed`);
+  console.log(`  demo HR: ${demoHR ? demoHR.email : "NOT FOUND"} — charts will be empty without it`);
 
   /* 2. demo students */
   const password = await hash(DEMO_PASSWORD, 12);
@@ -235,9 +244,14 @@ async function seed() {
   const removed = await ApplicationModel.deleteMany({ studentEmail: { $in: emails } });
 
   const rows = [];
+  let attachedToDemoDrives = 0;
   for (const student of students) {
     for (const [company, role, pkg, status, daysAgo] of student.apps) {
-      const drive = findDrive(company) || drives[0];
+      // Prefer this HR's own drive so the HR dashboard (which scopes every
+      // number to drives it owns) actually receives these applications.
+      const drive =
+        demoDrives.get(company.toLowerCase()) || findDrive(company) || drives[0];
+      if (demoDrives.has(company.toLowerCase())) attachedToDemoDrives += 1;
       const appliedAt = atDays(-daysAgo);
       rows.push({
         studentid: student.doc._id,
@@ -260,6 +274,7 @@ async function seed() {
   const inserted = await ApplicationModel.insertMany(rows);
 
   console.log(`  applications: ${removed.deletedCount} removed, ${inserted.length} inserted`);
+  console.log(`    of those, ${attachedToDemoDrives} landed on the demo HR's drives (the rest need a matching company drive)`);
   console.log(`  students: ${students.length} (${emails.join(", ")})`);
   console.log(`\nDone. Password for all demo accounts: ${DEMO_PASSWORD}`);
 

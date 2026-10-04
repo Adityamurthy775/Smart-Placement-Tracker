@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router';
 import {
   Bar, BarChart, CartesianGrid, Cell, Pie as RPie, PieChart as RPieChart,
-  Tooltip as RTooltip, XAxis as RXAxis, YAxis as RYAxis, ResponsiveContainer,
+  Tooltip as RTooltip, XAxis as RXAxis, YAxis as RYAxis,
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Area, AreaChart } from '@/components/charts/area-chart';
@@ -280,6 +280,13 @@ const trackerConfig = {
   offers: { label: 'Offers', color: BRAND_DARK },
 };
 
+// HR "Applicants per drive" / Admin "Students per branch". ChartContainer
+// requires a `config` and reads it for the tooltip label, so the single `value`
+// series needs a label entry or the tooltip renders a blank name.
+const hrBarChartConfig = {
+  value: { label: 'Applicants', color: BRAND },
+};
+
 function TrackerCard({ rows, mode, onModeChange }) {
   const peak = rows.reduce(
     (best, row) => (best === null || row.value > best.value ? row : best),
@@ -416,7 +423,7 @@ function TrendCard({ points, rangeDays, onGoDrives, onGoApplications }) {
 }
 
 
-/* ── Recent applications table, filtered by the top-bar search ── */
+/* ── Recent applications table: the six most recent ── */
 const STATUS_STYLE = {
   APPLIED: 'text-[#5a6b7d] bg-[#f1f4f6]',
   SHORTLISTED: 'text-[#b45309] bg-[#fef4e6]',
@@ -425,50 +432,30 @@ const STATUS_STYLE = {
   REJECTED: 'text-[#b42318] bg-[#fdecec]',
 };
 
-function RecentTable({ rows, query, onClearQuery, onGoDrives }) {
-  const needle = query.trim().toLowerCase();
-  const filtered = needle
-    ? rows.filter((row) =>
-        `${row.company} ${row.role} ${row.status}`.toLowerCase().includes(needle),
-      )
-    : rows;
-  const latest = filtered.slice(0, 6);
+function RecentTable({ rows, onGoDrives }) {
+  const latest = rows.slice(0, 6);
 
   return (
     <div className={cn(CARD, 'p-5')}>
       <CardHead
         title="Recent Applications"
-        sub={needle ? `${filtered.length} matching "${query.trim()}"` : 'Latest activity across all drives'}
+        sub="Latest activity across all drives"
         action={<RoundAction><ArrowUpRight size={15} /></RoundAction>}
       />
 
       {latest.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center">
-          <p className="text-base font-semibold text-[#0f172a]">
-            {rows.length === 0 ? 'No applications yet' : 'No match for that search'}
-          </p>
+          <p className="text-base font-semibold text-[#0f172a]">No applications yet</p>
           <p className="text-sm text-[#8a97a5]">
-            {rows.length === 0
-              ? 'Browse open drives and apply to start filling this table.'
-              : 'Clear the search box to see everything again.'}
+            Browse open drives and apply to start filling this table.
           </p>
-          {rows.length === 0 ? (
-            <button
-              type="button"
-              onClick={onGoDrives}
-              className="mt-1 rounded-full bg-[#0a7d45] px-4 py-2 text-sm font-bold text-white"
-            >
-              Browse drives
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onClearQuery}
-              className="mt-1 text-sm font-bold text-[#0a7d45] underline"
-            >
-              Clear search
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onGoDrives}
+            className="mt-1 rounded-full bg-[#0a7d45] px-4 py-2 text-sm font-bold text-white"
+          >
+            Browse drives
+          </button>
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto">
@@ -641,7 +628,13 @@ function AnalyticsSection({ role, counts, applications, successRate, hrStats, ad
             </p>
           ) : (
             <div className="mt-4 h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              {/* `ChartTooltipContent` calls useChart(), which throws unless a
+                  <ChartContainer> is above it. This chart was built on raw
+                  recharts primitives, so the provider was missing and hovering
+                  it crashed the dashboard with "useChart must be used within a
+                  <ChartContainer />". ChartContainer supplies the provider and
+                  its own ResponsiveContainer, so the explicit one goes. */}
+              <ChartContainer config={hrBarChartConfig} className="h-full w-full aspect-auto">
                 <BarChart data={barChart} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#eceff2" strokeDasharray="4 6" />
                   <RXAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#8a97a5' }} />
@@ -649,7 +642,7 @@ function AnalyticsSection({ role, counts, applications, successRate, hrStats, ad
                   <RTooltip cursor={{ fill: 'rgba(18,162,90,0.06)' }} content={<ChartTooltipContent indicator="dot" />} />
                   <Bar dataKey="value" radius={[10, 10, 0, 0]} maxBarSize={56} fill="#12a25a" />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </div>
           )}
         </div>
@@ -792,20 +785,49 @@ function AnalyticsSection({ role, counts, applications, successRate, hrStats, ad
   );
 }
 
-/* ── HR drive creation modal ── */
+/* ── HR drive create/edit modal ── */
 const BRANCH_OPTIONS = ['CSE', 'ECE', 'EEE', 'AIML', 'DS', 'CS', 'ALL'];
 
-function DriveCreationModal({ companies, onClose, onCreate, creating }) {
-  const [form, setForm] = useState({
-    Title: '',
-    JobRole: '',
-    Package: '',
-    LastDate: '',
-    MinCGPA: '',
-    AllowedBranch: [],
-    companyId: '',
-    description: '',
-  });
+/* Drive fields → the date input wants `yyyy-mm-dd`, but Mongo hands back a full
+   ISO string. Feeding that straight to <input type="date"> renders nothing and
+   silently saves an empty date on the next edit. */
+const toDateInput = (value) => {
+  const d = parseDate(value);
+  if (!d) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const emptyDriveForm = {
+  Title: '',
+  JobRole: '',
+  Package: '',
+  LastDate: '',
+  MinCGPA: '',
+  AllowedBranch: [],
+  companyName: '',
+  description: '',
+};
+
+/* Seeding from `drive` turns the create modal into the edit one — same fields,
+   same validation, one component instead of a near-duplicate. */
+const formFromDrive = (drive) => ({
+  // Carried through so the submit knows which drive to PUT to. It is read from
+  // the form only; the server ignores it (not in EDITABLE_FIELDS).
+  _id: drive?._id,
+  Title: drive?.Title || '',
+  JobRole: drive?.JobRole || '',
+  Package: drive?.Package || '',
+  LastDate: toDateInput(drive?.LastDate),
+  MinCGPA: drive?.MinCGPA ?? '',
+  AllowedBranch: Array.isArray(drive?.AllowedBranch) ? drive.AllowedBranch : [],
+  companyName: drive?.companyId?.CompanyName || '',
+  description: drive?.description || '',
+});
+
+function DriveCreationModal({ companies, onClose, onCreate, creating, drive, mode = 'create' }) {
+  const isEdit = mode === 'edit';
+  const [form, setForm] = useState(() => (isEdit ? formFromDrive(drive) : emptyDriveForm));
 
   const toggleBranch = (branch) => {
     setForm((prev) => ({
@@ -821,8 +843,10 @@ function DriveCreationModal({ companies, onClose, onCreate, creating }) {
       <div className="w-full max-w-xl rounded-3xl border border-[#eceff2] bg-white p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-[#0f172a]">Create Drive</h2>
-            <p className="mt-1 text-base text-[#5a6b7d]">Post a new recruitment drive</p>
+            <h2 className="text-2xl font-bold text-[#0f172a]">{isEdit ? 'Edit Drive' : 'Create Drive'}</h2>
+            <p className="mt-1 text-base text-[#5a6b7d]">
+              {isEdit ? 'Update the details of this drive' : 'Post a new recruitment drive'}
+            </p>
           </div>
           <button
             type="button"
@@ -838,18 +862,18 @@ function DriveCreationModal({ companies, onClose, onCreate, creating }) {
             <span className="text-sm font-semibold text-[#5a6b7d]">Company name</span>
             <input
               type="text"
-              value={form.companyId}
-              onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+              value={form.companyName}
+              onChange={(e) => setForm({ ...form, companyName: e.target.value })}
               placeholder="e.g. Google"
               className="rounded-xl border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5 text-base text-[#0f172a] outline-none focus:border-[#12a25a]"
             />
             {/* The drive API resolves the company by name, so free text is what it
                 wants. When the roster knows the name, say whether it matched. */}
-            {companies?.length > 0 && form.companyId && (
+            {companies?.length > 0 && form.companyName && (
               <span className="text-sm text-[#0a7d45]">
-                {companies.some((c) => String(c.CompanyName).toLowerCase() === form.companyId.trim().toLowerCase())
-                  ? `Matches ${form.companyId.trim()} on file.`
-                  : `No company named "${form.companyId.trim()}" on file — the drive will not link to one.`}
+                {companies.some((c) => String(c.CompanyName).toLowerCase() === form.companyName.trim().toLowerCase())
+                  ? `Matches ${form.companyName.trim()} on file.`
+                  : `No company named "${form.companyName.trim()}" on file — a new one will be created.`}
               </span>
             )}
           </label>
@@ -953,7 +977,7 @@ function DriveCreationModal({ companies, onClose, onCreate, creating }) {
             onClick={() => onCreate(form)}
             className="h-12 rounded-full bg-[#0a7d45] px-6 text-lg font-bold text-white transition hover:bg-[#12a25a] disabled:opacity-60"
           >
-            {creating ? 'Creating…' : 'Create Drive'}
+            {creating ? (isEdit ? 'Saving…' : 'Creating…') : isEdit ? 'Save Changes' : 'Create Drive'}
           </button>
         </div>
       </div>
@@ -975,14 +999,20 @@ function driveEligibility(drive, cgpa, branch) {
   return open && cgpaOk && branchOk;
 }
 
-function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying, notice, isHR, companies, onCreateDrive, creating }) {
+function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying, notice, isHR, isAdmin, companies, onCreateDrive, onUpdateDrive, onDeleteDrive, creating }) {
   const [q, setQ] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  // Edit reuses the create modal; `editing` holds the drive being edited.
+  const [editing, setEditing] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   // The page owns the submit (it holds `creating` and the API call), so the
   // modal closes here the moment the request settles — success or failure.
   const wasCreating = useRef(false);
   useEffect(() => {
-    if (wasCreating.current && !creating) setShowCreate(false);
+    if (wasCreating.current && !creating) {
+      setShowCreate(false);
+      setEditing(null);
+    }
     wasCreating.current = creating;
   }, [creating]);
   // tab without asking the backend for a table it does not have.
@@ -1019,12 +1049,24 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
     return !needle || hay.includes(needle);
   });
 
+  // Applicants per drive, counted once from the applications already in memory.
+  // HR and Admin oversee the roster; showing the count per card is the number
+  // they actually act on. Student cards keep their own applied/eligible state.
+  const applicantCounts = useMemo(() => {
+    const counts = new Map();
+    applications.forEach((app) => {
+      const key = String(app.driveid || app.driveId || '');
+      if (key) counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [applications]);
+  const showApplicants = isHR || isAdmin;
+
   return (
     <div className="flex flex-col gap-5">
-  return (
       <div className={cn(CARD, 'flex flex-wrap items-center justify-between gap-3 p-5')}>
         <div>
-          <h2 className="text-2xl font-bold text-[#0f172a]">Available Drives</h2>
+          <h2 className="text-2xl font-bold text-[#0f172a]">{isAdmin ? 'All Drives' : 'Available Drives'}</h2>
           <p className="text-sm text-[#8a97a5]">{rows.length} of {drives.length} drives</p>
         </div>
         <div className="flex items-center gap-3">
@@ -1098,6 +1140,11 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
                 }
                 matchPercentage={matchPercentage}
                 eligible={eligible}
+                /* HR/Admin watch the roster, not their own eligibility: no match
+                   score, no Apply, no Save. `applicants` replaces the student
+                   concerns with the number they actually manage. */
+                readOnly={showApplicants}
+                applicants={showApplicants ? (applicantCounts.get(String(drive._id)) || 0) : undefined}
                 tags={[
                   `Min CGPA ${drive.MinCGPA}`,
                   ...(drive.AllowedBranch || []).map((b) => String(b).toUpperCase()),
@@ -1114,6 +1161,11 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
                 applied={already}
                 applying={applying}
                 saved={isSaved}
+                /* Edit/Delete are offered only to the recruiter who posted the
+                   drive. The server enforces the same rule, so this is purely to
+                   avoid showing buttons that would 403. */
+                onEdit={isHR ? () => setEditing(drive) : undefined}
+                onDelete={isHR ? () => setConfirmDelete(drive) : undefined}
                 className="max-w-none"
               />
             );
@@ -1128,6 +1180,52 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
           onCreate={onCreateDrive}
           creating={creating}
         />
+      )}
+
+      {editing && (
+        <DriveCreationModal
+          mode="edit"
+          drive={editing}
+          companies={companies}
+          onClose={() => setEditing(null)}
+          onCreate={onUpdateDrive}
+          creating={creating}
+        />
+      )}
+
+      {/* Deleting a drive also removes its applications, so this asks first and
+          names the drive — there is no undo. */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#0f172a]/55 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-[#eceff2] bg-white p-7">
+            <h2 className="text-2xl font-bold text-[#0f172a]">Delete this drive?</h2>
+            <p className="mt-2 text-base text-[#5a6b7d]">
+              &ldquo;{confirmDelete.Title || confirmDelete.companyId?.CompanyName}&rdquo; will be
+              removed, along with every application students sent to it. This cannot be undone.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="h-12 rounded-full border border-[#eceff2] px-6 text-lg font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={creating}
+                onClick={async () => {
+                  const target = confirmDelete;
+                  setConfirmDelete(null);
+                  await onDeleteDrive(target);
+                }}
+                className="h-12 rounded-full bg-[#b42318] px-6 text-lg font-bold text-white transition hover:bg-[#d94a45] disabled:opacity-60"
+              >
+                {creating ? 'Deleting…' : 'Delete drive'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1272,29 +1370,21 @@ function timelineFor(app) {
   }, []);
 }
 
-function ApplicationsView({ applications, query, onClearQuery }) {
-  const needle = query.trim().toLowerCase();
+function ApplicationsView({ applications }) {
   const rows = useMemo(() => {
-    const matched = needle
-      ? applications.filter((app) =>
-          `${app.company} ${app.role} ${app.status}`.toLowerCase().includes(needle),
-        )
-      : applications;
-    return [...matched].sort((a, b) => {
+    return [...applications].sort((a, b) => {
       const left = parseDate(a.appliedAt || a.appliedDate)?.getTime() ?? 0;
       const right = parseDate(b.appliedAt || b.appliedDate)?.getTime() ?? 0;
       return right - left;
     });
-  }, [applications, needle]);
+  }, [applications]);
 
   return (
     <div className="flex flex-col gap-5">
       <div className={cn(CARD, 'flex flex-wrap items-center justify-between gap-3 p-5')}>
         <div>
           <h2 className="text-2xl font-bold text-[#0f172a]">My Applications</h2>
-          <p className="text-base text-[#8a97a5]">
-            {needle ? rows.length + ' matching "' + needle + '"' : rows.length + ' applications, newest first'}
-          </p>
+          <p className="text-base text-[#8a97a5]">{rows.length} applications, newest first</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {STATUSES.map((key) => (
@@ -1310,12 +1400,8 @@ function ApplicationsView({ applications, query, onClearQuery }) {
 
       {rows.length === 0 ? (
         <div className={cn(CARD, 'flex flex-col items-center gap-2 p-10 text-center')}>
-          <p className="text-lg font-semibold text-[#0f172a]">
-            {applications.length === 0 ? 'No applications yet' : 'No match for that search'}
-          </p>
-          <button type="button" onClick={onClearQuery} className="text-base font-bold text-[#0a7d45] underline">
-            {applications.length === 0 ? 'Apply from the Drives tab' : 'Clear search'}
-          </button>
+          <p className="text-lg font-semibold text-[#0f172a]">No applications yet</p>
+          <p className="text-base text-[#8a97a5]">Apply from the Drives tab</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
@@ -1537,7 +1623,6 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [rangeDays, setRangeDays] = useState(90);
   const [mode, setMode] = useState('monthly');
-  const [query, setQuery] = useState('');
   const [authTimedOut, setAuthTimedOut] = useState(false);
   const [tab, setTab] = useState('overview');
   const [studentDoc, setStudentDoc] = useState(null);
@@ -1863,6 +1948,47 @@ export default function Dashboard() {
     }
   };
 
+  const updateDrive = async (form) => {
+    setCreating(true);
+    try {
+      await axios.put(
+        `${API_BASE}/drive-api/drive/${form._id}`,
+        {
+          Title: form.Title,
+          JobRole: form.JobRole,
+          Package: form.Package,
+          LastDate: form.LastDate,
+          MinCGPA: form.MinCGPA,
+          AllowedBranch: form.AllowedBranch,
+          companyName: form.companyName,
+          description: form.description,
+        },
+        { withCredentials: true },
+      );
+      setApplyNotice('Drive updated.');
+      load();
+    } catch (error) {
+      setApplyNotice(`Could not update drive: ${error.response?.data?.message || 'server error'}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const deleteDrive = async (drive) => {
+    setCreating(true);
+    try {
+      await axios.delete(`${API_BASE}/drive-api/drive/${drive._id}`, {
+        withCredentials: true,
+      });
+      setApplyNotice('Drive deleted.');
+      load();
+    } catch (error) {
+      setApplyNotice(`Could not delete drive: ${error.response?.data?.message || 'server error'}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const totalApplications = applications.length;
   const successRate = totalApplications
     ? Math.round((counts.SELECTED / totalApplications) * 100)
@@ -1929,16 +2055,10 @@ export default function Dashboard() {
             ))}
           </nav>
 
+          {/* No search box here: it only ever filtered the applications table,
+              and that table has its own per-tab controls. The right cluster is
+              the avatar + logout. */}
           <div className="flex shrink-0 items-center gap-2">
-            <label className="flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#eceff2] bg-white px-4">
-              <Search size={16} className="shrink-0 text-[#8a97a5]" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search applications"
-                className="w-32 border-0 bg-transparent py-0 text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
-              />
-            </label>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a7d45] text-base font-bold text-white">
               {initials(user?.name)}
             </span>
@@ -2241,8 +2361,6 @@ export default function Dashboard() {
               <div className="xl:col-span-8">
                 <RecentTable
                   rows={applications}
-                  query={query}
-                  onClearQuery={() => setQuery('')}
                   onGoDrives={() => setTab('drives')}
                 />
               </div>
@@ -2258,15 +2376,14 @@ export default function Dashboard() {
                 creating={creating}
                 notice={applyNotice}
                 isHR={isHR}
+                isAdmin={isAdmin}
                 companies={companies}
                 onCreateDrive={createDrive}
+                onUpdateDrive={updateDrive}
+                onDeleteDrive={deleteDrive}
               />
             ) : tab === 'applications' ? (
-              <ApplicationsView
-                applications={applications}
-                query={query}
-                onClearQuery={() => setQuery('')}
-              />
+              <ApplicationsView applications={applications} />
             ) : tab === 'analytics' ? (
               <AnalyticsSection
                 role={role}

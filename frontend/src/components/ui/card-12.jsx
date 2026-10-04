@@ -1,6 +1,6 @@
 import * as React from "react"
 import {
-  Briefcase, CalendarDays, CheckCircle2, CircleSlash, Clock, MapPin,
+  Briefcase, CalendarDays, CheckCircle2, CircleSlash, Clock, MapPin, Users,
 } from "lucide-react"
 import { motion } from "motion/react"
 
@@ -71,6 +71,12 @@ const MotionDiv = motion.div
  * @param {boolean} [props.applying]
  * @param {boolean} [props.saved]
  * @param {string} [props.className]
+ * @param {boolean} [props.readOnly]  hide student-only concerns (match %, Apply,
+ *   Save) for roles that only oversee drives — the Admin roster view.
+ * @param {number} [props.applicants] applicant count, shown in place of the
+ *   match score when `readOnly` is set.
+ * @param {() => void} [props.onEdit]    owner actions; hidden when absent.
+ * @param {() => void} [props.onDelete]  owner actions; hidden when absent.
  */
 const OpportunityCard = React.forwardRef(function OpportunityCard(
   {
@@ -90,6 +96,10 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
     applying = false,
     saved = false,
     className,
+    readOnly = false,
+    applicants,
+    onEdit,
+    onDelete,
   },
   ref,
 ) {
@@ -125,9 +135,12 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
         <Badge variant="success">{status}</Badge>
       </div>
 
-      {/* package + the one number that decides whether to apply */}
+      {/* package, plus whichever number the viewer cares about: a personal match
+          score for students, an applicant count for HR/Admin. Admin has no
+          CGPA/branch of their own, so a match score would be meaningless. */}
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
         <p className="text-3xl font-bold tracking-tight text-[#0f172a]">{packageLabel}</p>
+        {!readOnly && (
         <span
           className={cn(
             "flex items-center gap-1.5 text-lg font-bold",
@@ -137,6 +150,14 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
           {eligible ? <CheckCircle2 className="size-4" /> : <CircleSlash className="size-4" />}
           {eligible ? `${Math.round(matchPercentage)}% match` : "Not eligible"}
         </span>
+        )}
+        {/* readOnly viewers get the applicant count instead of a personal score. */}
+        {readOnly && (
+          <span className="flex items-center gap-1.5 text-lg font-bold text-[#0a7d45]">
+            <Users className="size-4" />
+            {applicants ?? 0} {applicants === 1 ? "applicant" : "applicants"}
+          </span>
+        )}
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-base text-[#5a6b7d]">
@@ -182,7 +203,9 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
 
       {/* actions — this project's Button scale tops out at h-9 because the type
           scale is 0.8rem base, so the size is set here rather than via a
-          variant. */}
+          variant. Apply and Save are student actions; Admin only oversees the
+          drive roster, so the whole block is omitted rather than disabled. */}
+      {!readOnly && (
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Button
           onClick={onApply}
@@ -199,6 +222,33 @@ const OpportunityCard = React.forwardRef(function OpportunityCard(
           {saved ? "Saved" : "Save for later"}
         </Button>
       </div>
+      )}
+
+      {/* Owner actions. Rendered only when the caller supplies them, so a
+          student card and an Admin's read-only card both stay action-free
+          without needing to know about HR's permissions. */}
+      {(onEdit || onDelete) && (
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {onEdit && (
+            <Button
+              onClick={onEdit}
+              variant="outline"
+              className="h-10 w-full rounded-full border-[#eceff2] px-5 text-base font-bold text-[#0f172a] hover:bg-[#f1f4f6]"
+            >
+              Edit
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              onClick={onDelete}
+              variant="outline"
+              className="h-10 w-full rounded-full border-[#f3d3d1] px-5 text-base font-bold text-[#b42318] hover:bg-[#fdecec]"
+            >
+              Delete
+            </Button>
+          )}
+        </div>
+      )}
     </MotionDiv>
   )
 })
