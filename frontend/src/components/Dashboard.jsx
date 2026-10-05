@@ -11,6 +11,7 @@ import { Grid } from '@/components/charts/grid';
 import { XAxis } from '@/components/charts/x-axis';
 import { ChartTooltip as BklitChartTooltip } from '@/components/charts/tooltip';
 import { OpportunityCard } from '@/components/ui/card-12';
+import { Banner } from '@/components/ui/banner';
 import { StatusTimeline } from '@/components/ui/incident-status-timeline';
 import { UserContext } from '../contexts/UserContext';
 import { API_BASE, cn } from '@/lib/utils';
@@ -52,10 +53,14 @@ const STATUS_META = {
   REJECTED: { verb: 'Not selected', tone: 'bg-[#fdecec] text-[#b42318]' },
 };
 
-function buildFeed(applications, closingSoon) {
+function buildFeed(applications, closingSoon, viewer = {}) {
+  // HR/Admin cannot apply to drives — their feed reports inbound applications
+  // ("who applied to what"), not the student-side "Applied: role at company".
+  const forRecruiter = Boolean(viewer.isHR || viewer.isAdmin);
   const events = [];
   applications.forEach((app) => {
     const where = `${app.role || 'Role'} at ${app.company || 'Company'}`;
+    const who = app.studentName || app.studentEmail || 'A student';
     const stamps = [
       [app.appliedAt || app.appliedDate, 'APPLIED'],
       [app.shortlistedAt, 'SHORTLISTED'],
@@ -66,10 +71,16 @@ function buildFeed(applications, closingSoon) {
     stamps.forEach(([at, status]) => {
       const date = parseDate(at);
       if (!date) return;
+      const verb = STATUS_META[status].verb;
+      const title = forRecruiter
+        ? status === 'APPLIED'
+          ? `New application: ${who} applied to ${where}`
+          : `${verb}: ${who} — ${where}`
+        : `${verb}: ${where}`;
       events.push({
         key: `${app._id}-${status}`,
         at: date,
-        title: `${STATUS_META[status].verb}: ${where}`,
+        title,
         tone: STATUS_META[status].tone,
       });
     });
@@ -85,10 +96,22 @@ function buildFeed(applications, closingSoon) {
   return events.sort((a, b) => b.at - a.at);
 }
 
-function NotificationsView({ events }) {
+function NotificationsView({ events, forRecruiter = false }) {
   return (
     <div className={cn(CARD, 'p-6')}>
       <CardHead title="Notifications" sub="Status changes and upcoming deadlines" />
+      {/* Banner: role-aware explainer. HR never applies to drives — the feed
+          below reports applications students sent TO them instead. */}
+      <Banner
+        status="info"
+        className="mt-4"
+        title={forRecruiter ? 'Recruiter notifications' : 'Your application notifications'}
+        description={
+          forRecruiter
+            ? 'You do not apply to drives from here — these are applications students sent to your drives.'
+            : 'Application updates for your profile and upcoming drive deadlines show up here.'
+        }
+      />
       {events.length === 0 ? (
         <p className="mt-6 text-base text-[#8a97a5]">
           Nothing yet. Application updates and drive deadlines show up here.
@@ -1001,6 +1024,9 @@ function driveEligibility(drive, cgpa, branch) {
 
 function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying, notice, isHR, isAdmin, companies, onCreateDrive, onUpdateDrive, onDeleteDrive, creating }) {
   const [q, setQ] = useState('');
+  // Status dropdown: All / Active / Inactive. "Active" = the drive is still
+  // open for applications (not past its deadline, not completed/cancelled).
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
   // Edit reuses the create modal; `editing` holds the drive being edited.
   const [editing, setEditing] = useState(null);
@@ -1043,11 +1069,39 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
   }, []);
 
   const needle = q.trim().toLowerCase();
-  const rows = drives.filter((drive) => {
-    const company = drive.companyId?.CompanyName || '';
-    const hay = `${company} ${drive.Title} ${drive.JobRole} ${drive.Package}`.toLowerCase();
-    return !needle || hay.includes(needle);
-  });
+  // A drive is open when it is active, not cancelled/completed, and its
+  // deadline has not passed — the same rule driveEligibility uses, minus
+  // per-student CGPA/branch checks.
+  const isOpen = (drive) => {
+    const last = parseDate(drive.LastDate);
+    const past = last ? last.getTime() < midnight : false;
+    return (
+      drive.isActive !== false &&
+      drive.status !== 'COMPLETED' &&
+      drive.status !== 'CANCELLED' &&
+      !past
+    );
+  };
+  const daysLeftOf = (drive) => {
+    const last = parseDate(drive.LastDate);
+    return last ? Math.max(0, Math.ceil((last.getTime() - midnight) / 86400000)) : Infinity;
+  };
+  // Sort: open drives FIRST (soonest deadline first), then inactive/closed.
+  const rows = drives
+    .filter((drive) => {
+      const company = drive.companyId?.CompanyName || '';
+      const hay = `${company} ${drive.Title} ${drive.JobRole} ${drive.Package}`.toLowerCase();
+      if (needle && !hay.includes(needle)) return false;
+      if (statusFilter === 'active') return isOpen(drive);
+      if (statusFilter === 'inactive') return !isOpen(drive);
+      return true;
+    })
+    .sort((a, b) => {
+      const openFirst = Number(isOpen(b)) - Number(isOpen(a));
+      if (openFirst !== 0) return openFirst;
+      if (isOpen(a)) return daysLeftOf(a) - daysLeftOf(b);
+      return 0;
+    });
 
   // Applicants per drive, counted once from the applications already in memory.
   // HR and Admin oversee the roster; showing the count per card is the number
@@ -1066,8 +1120,8 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
     <div className="flex flex-col gap-5">
       <div className={cn(CARD, 'flex flex-wrap items-center justify-between gap-3 p-5')}>
         <div>
-          <h2 className="text-2xl font-bold text-[#0f172a]">{isAdmin ? 'All Drives' : 'Available Drives'}</h2>
-          <p className="text-sm text-[#8a97a5]">{rows.length} of {drives.length} drives</p>
+          <h2 className="text-3xl font-bold text-[#0f172a]">{isAdmin ? 'All Drives' : 'Available Drives'}</h2>
+          <p className="text-base text-[#8a97a5]">{rows.length} of {drives.length} drives · open first</p>
         </div>
         <div className="flex items-center gap-3">
           {isHR && (
@@ -1088,6 +1142,20 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
               className="w-56 bg-transparent text-base text-[#0f172a] outline-none placeholder:text-[#a4b0bd]"
             />
           </label>
+          {/* Status dropdown: All / Active / Inactive */}
+          <label className="flex items-center gap-2 rounded-full border border-[#eceff2] bg-[#fafbfc] px-4 py-2.5">
+            <span className="text-sm font-bold text-[#5a6b7d]">Status</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filter drives by status"
+              className="cursor-pointer bg-transparent text-base font-bold text-[#0f172a] outline-none"
+            >
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -1099,9 +1167,9 @@ function DrivesView({ drives, applications, cgpa, branch, onOpenApply, applying,
 
       {rows.length === 0 ? (
         <div className={cn(CARD, 'p-10 text-center')}>
-          <p className="text-base font-semibold text-[#0f172a]">No drive matches that search</p>
-          <button type="button" onClick={() => setQ('')} className="mt-2 text-sm font-bold text-[#0a7d45] underline">
-            Clear search
+          <p className="text-base font-semibold text-[#0f172a]">No drive matches that filter</p>
+          <button type="button" onClick={() => { setQ(''); setStatusFilter('all'); }} className="mt-2 text-sm font-bold text-[#0a7d45] underline">
+            Clear filters
           </button>
         </div>
       ) : (
@@ -1587,26 +1655,32 @@ function AdminView() {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-      {columns.map(({ title, rows, render }) => (
-        <div key={title} className={cn(CARD, 'p-5')}>
-          <CardHead title={title} sub={`${rows.length} total`} />
-          {rows.length === 0 ? (
-            <p className="mt-4 text-sm text-[#8a97a5]">None on record.</p>
-          ) : (
-            <ul className="mt-3 flex flex-col gap-2">
-              {rows.slice(0, 8).map((row, i) => (
-                <li key={row._id || i} className="truncate rounded-xl bg-[#f1f4f6] px-3 py-2 text-sm text-[#0f172a]">
-                  {render(row)}
-                </li>
-              ))}
-              {rows.length > 8 && (
-                <li className="text-sm font-semibold text-[#8a97a5]">+{rows.length - 8} more</li>
-              )}
-            </ul>
-          )}
-        </div>
-      ))}
+    <div className="flex flex-col gap-5">
+      <div>
+        <h2 className="text-3xl font-bold text-[#0f172a]">Admin</h2>
+        <p className="text-base text-[#8a97a5]">Campus roster — students, companies, drives and teachers.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {columns.map(({ title, rows, render }) => (
+          <div key={title} className={cn(CARD, 'p-5')}>
+            <CardHead title={title} sub={`${rows.length} total`} />
+            {rows.length === 0 ? (
+              <p className="mt-4 text-base text-[#8a97a5]">None on record.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-2">
+                {rows.slice(0, 8).map((row, i) => (
+                  <li key={row._id || i} className="truncate rounded-xl bg-[#f1f4f6] px-3 py-2 text-base text-[#0f172a]">
+                    {render(row)}
+                  </li>
+                ))}
+                {rows.length > 8 && (
+                  <li className="text-base font-semibold text-[#8a97a5]">+{rows.length - 8} more</li>
+                )}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1808,8 +1882,8 @@ export default function Dashboard() {
   }, [profileDetails]);
 
   const feed = useMemo(
-    () => buildFeed(applications, closingSoon),
-    [applications, closingSoon],
+    () => buildFeed(applications, closingSoon, { isHR, isAdmin }),
+    [applications, closingSoon, isHR, isAdmin],
   );
 
   const avgPackage = analytics?.avgPackage ?? 0;
@@ -2043,7 +2117,7 @@ export default function Dashboard() {
                 onClick={() => setTab(key)}
                 aria-current={tab === key}
                 className={cn(
-                  'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl px-3.5 py-2.5 text-base font-bold transition',
+                  'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-2xl px-4 py-2.5 text-lg font-bold transition',
                   tab === key
                     ? 'bg-[#12a25a] text-white shadow-[0_2px_8px_rgba(18,162,90,0.25)]'
                     : 'text-[#5a6b7d] hover:bg-[#f3f5f7] hover:text-[#0f172a]',
@@ -2320,50 +2394,8 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-
-                <div className={cn(CARD, 'p-5')}>
-                  <CardHead
-                    title="Branch Placements"
-                    sub="Selected students per branch"
-                    action={<RoundAction><BarChart3 size={15} /></RoundAction>}
-                  />
-                  {Object.keys(analytics?.branchBreakdown || {}).length === 0 ? (
-                    <p className="mt-4 text-sm text-[#8a97a5]">
-                      No branch data yet. Placements show up here once HR marks a candidate selected.
-                    </p>
-                  ) : (
-                    <div className="mt-4 flex flex-col gap-3">
-                      {Object.entries(analytics.branchBreakdown).map(([name, value]) => {
-                        const max = Math.max(
-                          ...Object.values(analytics.branchBreakdown).map(Number),
-                          1,
-                        );
-                        return (
-                          <div key={name} className="flex items-center gap-3">
-                            <span className="w-12 shrink-0 text-sm font-semibold text-[#5a6b7d]">{name}</span>
-                            <span className="h-2 flex-1 overflow-hidden rounded-full bg-[#f1f4f6]">
-                              <span
-                                className="block h-full rounded-full bg-[#12a25a]"
-                                style={{ width: `${Math.round((Number(value) / max) * 100)}%` }}
-                              />
-                            </span>
-                            <span className="w-6 shrink-0 text-right text-sm font-bold text-[#0f172a]">{value}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
               </div>
 
-
-              {/* recent applications span the left + centre */}
-              <div className="xl:col-span-8">
-                <RecentTable
-                  rows={applications}
-                  onGoDrives={() => setTab('drives')}
-                />
-              </div>
             </div>
             ) : tab === 'drives' ? (
               <DrivesView
@@ -2395,7 +2427,7 @@ export default function Dashboard() {
                 drives={drives}
               />
             ) : tab === 'notifications' ? (
-              <NotificationsView events={feed} />
+              <NotificationsView events={feed} forRecruiter={isHR || isAdmin} />
             ) : tab === 'admin' ? (
               <AdminView />
             ) : (

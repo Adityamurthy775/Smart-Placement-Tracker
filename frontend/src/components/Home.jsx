@@ -1,7 +1,7 @@
 import StaggeredMenu from './ui/StaggeredMenu'
 import HeroSection from './HeroSection'
 import ExpandCards from './ExpandCards'
-import FeaturesSection from './FeaturesSection'
+import FeaturesBlock from './ui/features-4'
 import { HowItWorks } from './ui/how-it-works'
 import CtaSection from './CtaSection'
 
@@ -52,7 +52,7 @@ function Home() {
 
       <HeroSection />
       <ExpandCards />
-      <FeaturesSection />
+      <FeaturesBlock />
       <HowItWorks />
       <CtaSection />
     </main>

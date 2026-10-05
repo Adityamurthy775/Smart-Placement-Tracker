@@ -5,6 +5,8 @@ import Home from './components/Home'
 import Login from './components/Login'
 import Register from './components/Register'
 import Preloader from './components/Preloader'
+import ShaderDemo from './components/ShaderDemo'
+import OceanicDepthsDemo from './components/OceanicDepthsDemo'
 
 const Dashboard = lazy(() => import('./components/Dashboard'))
 
@@ -37,7 +39,21 @@ function App() {
     },{
           path:"/dashboard",
           element:<Dashboard/>
-    }
+    },
+    {
+          /* Outside RootLayout on purpose. That layout wraps its outlet in
+             `min-h-screen` and adds the site Header and Footer; a full-bleed
+             dark showcase would inherit the header and the light page ground
+             behind its own `min-h-screen`. */
+          path:"/shader-demo",
+          element:<ShaderDemo/>
+        },
+        {
+          /* Also outside RootLayout — same reason: a full-bleed background page
+             should not inherit the site header and footer. */
+          path:"/oceanic-depths",
+          element:<OceanicDepthsDemo/>
+        }
   ])
 
   if (loading) {

@@ -65,6 +65,10 @@ const HISTORY = [
   ["infosys", "Full-Time", "12 LPA", "APPLIED", 14],
   ["SWETRTYK", "Software Engineer", "10 LPA", "APPLIED", 8],
   ["Google", "Software Internship", "10 LPA", "APPLIED", 3],
+  // Applications onto the extra demo-HR drives so the HR dashboard and the
+  // recruiter notification feed ("X applied to Y") have live rows.
+  ["Acme Corp", "Software Engineer", "15 LPA", "SHORTLISTED", 5],
+  ["TCS", "Software Engineer", "9 LPA", "APPLIED", 3],
 ];
 
 // Extra demo students exist only so Branch Placements has more than one bar.
@@ -73,22 +77,31 @@ const PEERS = [
   ["student2", "Demo Student Two", 2, "B", "ECE", 8.1, [
     ["infosys", "Full-Time", "12 LPA", "SELECTED", 92],
     ["Google", "Software Engineer", "10 LPA", "REJECTED", 61],
+    ["TCS", "Software Engineer", "9 LPA", "APPLIED", 2],
   ]],
   ["student3", "Demo Student Three", 3, "A", "AIML", 8.9, [
     ["Excelerate", "Software Engineer", "10 LPA", "SELECTED", 77],
     ["FaceBook", "Software Engineer", "20 LPA", "SHORTLISTED", 26],
+    ["Acme Corp", "Software Engineer", "15 LPA", "INTERVIEW", 4],
   ]],
   ["student4", "Demo Student Four", 4, "C", "MECH", 7.6, [
     ["SWETRTYK", "Software Engineer", "10 LPA", "SELECTED", 54],
   ]],
 ];
 
-// [title, company, role, package, daysFromNow, minCgpa]
+// [title, company, role, package, daysFromNow, minCgpa, isActive?]
 const UPCOMING_DRIVES = [
   ["[demo] Google Campus Drive", "Google", "Software Engineer", "10 LPA", 5, 7],
   ["[demo] Infosys Walk-in", "infosys", "Full-Time", "12 LPA", 11, 7],
   ["[demo] Excelerate Internship", "Excelerate", "Software Internship", "10 LPA", 19, 7.5],
   ["[demo] FaceBook Hackathon", "FaceBook", "Software Engineer", "20 LPA", 26, 7],
+  // Extra drives owned by the demo HR. Two active, one paused (isActive false),
+  // one with a deadline already passed — so the drives-tab Active/Inactive
+  // dropdown has real rows in BOTH buckets after seeding.
+  ["[demo] Acme Corp SDE Drive", "Acme Corp", "Software Engineer", "15 LPA", 8, 7],
+  ["[demo] TCS Ninja Drive", "TCS", "Software Engineer", "9 LPA", 14, 6.5],
+  ["[demo] Wipro Elite Drive", "Wipro", "Full stack dev", "8 LPA", 21, 6, false],
+  ["[demo] Deloitte Analyst Drive", "Deloitte", "Business Analyst", "11 LPA", -5, 7],
 ];
 
 // Timestamps the status transition implies, so the data reads consistently.
@@ -130,11 +143,21 @@ async function seed() {
   // scope to `hrId`, so applications landing there showed up nowhere on the HR
   // dashboard and every chart read zero.
   const demoDrives = new Map();
-  for (const [title, company, role, pkg, days, minCgpa] of UPCOMING_DRIVES) {
-    const source = findDrive(company);
+  for (const [title, company, role, pkg, days, minCgpa, active = true] of UPCOMING_DRIVES) {
+    let source = findDrive(company);
     if (!source) {
-      console.log(`  skip drive (company not found): ${company}`);
-      continue;
+      // The HR's own drives must not depend on somebody else having posted for
+      // the company first — create the company so the drive can exist.
+      let co = await CompanyModel.findOne({ CompanyName: company });
+      if (!co) {
+        co = await CompanyModel.create({
+          CompanyName: company,
+          CompanyId: Date.now(),
+          Email: `${company.replace(/\s+/g, "").toLowerCase()}@example.com`,
+          isActive: true,
+        });
+      }
+      source = { companyId: co._id };
     }
     const companyId = source.companyId?._id ?? source.companyId;
     const existing = await DriveModel.findOne({ Title: title });
@@ -143,7 +166,7 @@ async function seed() {
       // of the next-30-days range and Closing Soon empties again.
       await DriveModel.updateOne(
         { _id: existing._id },
-        { $set: { LastDate: atDays(days), status: "UPCOMING", isActive: true, hrId: demoHR?._id } },
+        { $set: { LastDate: atDays(days), status: "UPCOMING", isActive: active, hrId: demoHR?._id } },
       );
       demoDrives.set(company.toLowerCase(), await DriveModel.findById(existing._id));
       continue;
@@ -159,7 +182,7 @@ async function seed() {
       AllowedBranch: ["CSE", "AIML", "ALL"],
       status: "UPCOMING",
       description: "Seeded by seed-dashboard-demo.js for the dashboard demo.",
-      isActive: true,
+      isActive: active,
     });
     demoDrives.set(company.toLowerCase(), made);
     created += 1;
